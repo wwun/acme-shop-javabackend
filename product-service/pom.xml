@@ -25,6 +25,11 @@
   </properties>
 
   <dependencies>
+    <!-- Spring Boot Security -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
     <!-- Spring Boot Web (REST API) -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -84,6 +89,7 @@
         <artifactId>spring-security-test</artifactId>
         <scope>test</scope>
     </dependency>
+    
   </dependencies>
 
   <build>

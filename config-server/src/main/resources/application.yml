@@ -1,0 +1,11 @@
+spring:
+    application:
+        name: config-server
+    cloud:
+        config:
+            server:
+                git:
+                    uri: https://github.com/wwun/acme-shop-config.git
+                    default-label: main
+                    clone-on-start: true
+                    skip-ssl-validation: true

@@ -4,6 +4,12 @@
   <artifactId>acme-shop</artifactId>
   <version>1.0.0</version>
   <packaging>pom</packaging>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <java.version>17</java.version>
+  </properties>
   <!-- Centralized versions -->
   <dependencyManagement>
     <dependencies>
@@ -83,12 +89,13 @@
     </dependency>
   </dependencies>
   <modules>
+    <module>acme-commons</module>
+    <module>config-server</module>
+    <module>eureka-server</module>
+    <module>api-gateway-server</module>
     <module>product-service</module>
     <module>order-service</module>
-    <module>user-service</module>
-    <module>api-gateway-server</module>
-    <module>eureka-server</module>
-    <module>acme-commons</module>
+    <module>user-service</module>    
   </modules>
   <build>
     <pluginManagement>

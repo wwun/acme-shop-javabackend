@@ -3,6 +3,8 @@ package com.wwun.acme.api_gateway_server.security;
 import com.wwun.acme.security.JwtService;
 import static com.wwun.acme.security.TokenJwtConfig.*;
 
+import java.util.List;
+
 import reactor.core.publisher.Mono;
 
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -26,6 +28,10 @@ public class JwtAuthFilter implements GlobalFilter, Ordered{
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+        if(exchange.getRequest().getURI().getPath().startsWith("/api/auth")){
+            return chain.filter(exchange);
+        }
+
         if(authHeader == null || !authHeader.startsWith(PREFIX_HEADER)){
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
@@ -34,24 +40,28 @@ public class JwtAuthFilter implements GlobalFilter, Ordered{
         String token = authHeader.substring(PREFIX_HEADER.length()).trim();
 
         try{
-            String username = jwtService.extractUsername(token);
-            if(!jwtService.validateToken(token, username)){
+            
+            if(!jwtService.isTokenValid(token)){
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
 
-            
-        }catch(Exception ex){
+            String username = jwtService.extractUsername(token);
+            List<String> roles = jwtService.extractRoles(token);
+            String rolesHeader = String.join(",", roles);
 
+            exchange = exchange.mutate().request(exchange.getRequest().mutate().header("X-Auth-Username", username).header("X-Auth-Roles", rolesHeader).build()).build();
+            return chain.filter(exchange);
+        }catch(Exception ex){
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
-        throw new UnsupportedOperationException("Unimplemented method 'filter'");
     }
 
     @Override
     public int getOrder() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getOrder'");
+        return -1;
     }
 
 }

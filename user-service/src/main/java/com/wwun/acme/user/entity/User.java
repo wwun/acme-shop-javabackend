@@ -58,8 +58,7 @@ public class User {
     // @Transient
     // private boolean admin;
 
-    public User(UUID id, String username, String email, String password, List<Role> roles) {
-        this.id = id;
+    public User(String username, String password, String email, List<Role> roles) {
         this.username = username;
         this.email = email;
         this.password = password;

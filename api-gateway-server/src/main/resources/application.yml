@@ -29,6 +29,7 @@ spring:
           uri: lb://msvc-users
           predicates:
             - Path=/api/auth/**
+          filters: [] # no filter applied
 
 logging:
   level:
