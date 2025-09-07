@@ -2,7 +2,6 @@ package com.wwun.acme.user.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -36,8 +35,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         return http.authorizeHttpRequests((authz) -> authz
-                .requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
-                .anyRequest().authenticated())
+                .requestMatchers("/api/auth/**").permitAll()    //.requestMatchers(HttpMethod.GET, "/api/auth/**").permitAll()
+                .anyRequest().permitAll())  //.anyRequest().authenticated())
             .csrf(config -> config.disable())
             .build();
     }

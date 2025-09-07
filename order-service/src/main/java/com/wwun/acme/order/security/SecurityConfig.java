@@ -14,8 +14,9 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         return http
             .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/orders/health").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                .anyRequest().authenticated())
+                .anyRequest().permitAll())  //.anyRequest().authenticated())
             .csrf(csrf -> csrf.disable())
             .build();
     }

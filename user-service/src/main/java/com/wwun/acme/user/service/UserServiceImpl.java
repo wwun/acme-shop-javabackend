@@ -36,6 +36,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public User save(@Valid @RequestBody UserCreateRequestDTO userCreateRequestDTO) {
+        System.out.println("save serviceImpl");
         // Validar email único Username/email únicos → con existsByEmail y existsByUsername, Password seguro → puedes añadir un validador custom (mínimo 8 caracteres, mayúscula, número, etc, Roles válidos → no confiar en lo que envía el cliente, siempre validar con tu tabla roles
         if(userRepository.existsByEmail(userCreateRequestDTO.getEmail())){
             throw new RuntimeException("Email already in use");

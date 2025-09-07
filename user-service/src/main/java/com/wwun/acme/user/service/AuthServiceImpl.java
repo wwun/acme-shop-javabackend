@@ -39,6 +39,8 @@ public class AuthServiceImpl implements AuthService{
     @Override
     public User register(RegisterRequestDTO registerRequestDTO) {
 
+        System.out.println("register auth service");
+
         if(userRepository.existsByEmail(registerRequestDTO.getEmail())){
             throw new RuntimeException("Email already in use"); //wwun
         }
@@ -63,6 +65,5 @@ public class AuthServiceImpl implements AuthService{
         return new AuthResponseDTO(token, userDetails.getUsername());
     }
 
-    
 
 }

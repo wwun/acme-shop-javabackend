@@ -24,6 +24,7 @@
 /home/william/Documents/portfolio/acme-shop/order-service/src/main/java/com/wwun/acme/order/mapper/OrderMapper.java
 /home/william/Documents/portfolio/acme-shop/order-service/src/main/java/com/wwun/acme/order/repository/OrderItemRepository.java
 /home/william/Documents/portfolio/acme-shop/order-service/src/main/java/com/wwun/acme/order/repository/OrderRepository.java
+/home/william/Documents/portfolio/acme-shop/order-service/src/main/java/com/wwun/acme/order/security/SecurityConfig.java
 /home/william/Documents/portfolio/acme-shop/order-service/src/main/java/com/wwun/acme/order/service/OrderItemService.java
 /home/william/Documents/portfolio/acme-shop/order-service/src/main/java/com/wwun/acme/order/service/OrderItemServiceImpl.java
 /home/william/Documents/portfolio/acme-shop/order-service/src/main/java/com/wwun/acme/order/service/OrderService.java

@@ -17,6 +17,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
+//@Component
 public class JwtService {
 
     @Value("${jwt.secret}") //value added in properties

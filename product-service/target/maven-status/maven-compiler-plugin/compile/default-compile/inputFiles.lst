@@ -27,6 +27,7 @@
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/repository/CategoryRepository.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/repository/ProductRepository.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/repository/StockMovementRepository.java
+/home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/security/SecurityConfig.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/service/CategoryService.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/service/CategoryServiceImpl.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/service/ProductService.java

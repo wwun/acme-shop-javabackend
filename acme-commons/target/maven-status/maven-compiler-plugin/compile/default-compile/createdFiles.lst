@@ -1,1 +1,3 @@
 com/wwun/acme/security/JwtService.class
+com/wwun/acme/security/TokenJwtConfig.class
+com/wwun/acme/security/CommonsConfig.class
