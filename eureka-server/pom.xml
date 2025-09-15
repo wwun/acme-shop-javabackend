@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>eureka-server</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <name>eureka-server</name>
     <description>Eureka Service Registry for Acme Shop</description>
 
@@ -42,4 +42,20 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                        <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>  
+        </plugins>
+    </build>
 </project>

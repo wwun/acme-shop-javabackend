@@ -2,6 +2,4 @@ spring:
     application:
         name: msvc-products
     config: 
-        import: optional:configserver:http://localhost:8888
-    profiles:
-        active: dev
+        import: optional:configserver:http://config-server:8888

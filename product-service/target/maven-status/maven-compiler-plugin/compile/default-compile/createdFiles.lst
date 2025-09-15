@@ -29,6 +29,7 @@ com/wwun/acme/product/exception/InvalidCategoryException.class
 com/wwun/acme/product/exception/InvalidProductException.class
 com/wwun/acme/product/controller/GlobalExceptionHandler.class
 com/wwun/acme/product/service/CategoryServiceImpl.class
+com/wwun/acme/product/security/SecurityConfig.class
 com/wwun/acme/product/mapper/ProductMapperImpl.class
 com/wwun/acme/product/mapper/CategoryMapper.class
 com/wwun/acme/product/dto/ProductUpdateRequestDTO.class

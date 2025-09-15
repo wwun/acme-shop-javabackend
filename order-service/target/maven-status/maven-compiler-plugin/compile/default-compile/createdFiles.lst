@@ -8,6 +8,7 @@ com/wwun/acme/order/dto/order/HandlerExceptionDTO.class
 com/wwun/acme/order/exception/OrderNotFoundException.class
 com/wwun/acme/order/dto/order/order/OrderResponseDTO.class
 com/wwun/acme/order/service/OrderService.class
+com/wwun/acme/order/security/SecurityConfig.class
 com/wwun/acme/order/controller/HealthController.class
 com/wwun/acme/order/mapper/OrderItemMapperImpl.class
 com/wwun/acme/order/dto/order/orderItem/OrderItemCreateRequestDTO.class

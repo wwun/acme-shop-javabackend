@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>api-gateway-server</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <name>api-gateway-server</name>
     <description>API Gateway for Acme Shop</description>
 
@@ -59,4 +59,20 @@
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                        <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>  
+        </plugins>
+    </build>
 </project>
