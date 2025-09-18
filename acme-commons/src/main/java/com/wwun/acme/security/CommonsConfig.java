@@ -10,4 +10,9 @@ public class CommonsConfig {
     public JwtService jwtService(){
         return new JwtService();
     }
+
+    @Bean
+    public JwtAuthFilter jwtAuthFilter(JwtService jwtService){
+        return new JwtAuthFilter(jwtService);
+    }
 }

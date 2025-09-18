@@ -11,6 +11,7 @@ public interface UserService {
 
     User save(UserCreateRequestDTO userCreateRequestDTO);
     Optional<User> findById(UUID id);
+    Optional<User> findByUsername(String username);
     Optional<User> update(UUID id, UserUpdateRequestDTO userUpdateRequestDTO);
     void delete(UUID id);
 

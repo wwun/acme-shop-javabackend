@@ -121,6 +121,13 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+		<!-- Own Modules -->
+		<dependency>
+			<groupId>com.wwun.acme</groupId>
+            <artifactId>acme-commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+		</dependency>
+
 	</dependencies>
 	
 	<build>

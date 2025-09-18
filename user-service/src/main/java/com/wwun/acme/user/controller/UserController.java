@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -33,11 +34,7 @@ public class UserController {
         this.userMapper = userMapper;
     }
 
-    @PostMapping
-    public ResponseEntity<UserResponseDTO> save(@Valid @RequestBody UserCreateRequestDTO userCreateRequestDTO){
-        return ResponseEntity.status(HttpStatus.CREATED).body(userMapper.toResponseDTO(userService.save(userCreateRequestDTO)));
-    }
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> findById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(userMapper.toResponseDTO(userService.findById(id).get()));

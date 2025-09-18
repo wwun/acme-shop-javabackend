@@ -17,7 +17,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
-//@Component
+//@Component    //this class is being anotated in commonsconfig
 public class JwtService {
 
     @Value("${jwt.secret}") //value added in properties

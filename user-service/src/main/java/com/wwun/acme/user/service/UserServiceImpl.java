@@ -4,10 +4,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.wwun.acme.security.SecurityUtils;
 import com.wwun.acme.user.dto.User.UserCreateRequestDTO;
 import com.wwun.acme.user.dto.User.UserUpdateRequestDTO;
 import com.wwun.acme.user.entity.Role;
@@ -15,6 +19,8 @@ import com.wwun.acme.user.entity.User;
 import com.wwun.acme.user.mapper.UserMapper;
 import com.wwun.acme.user.repository.RoleRepository;
 import com.wwun.acme.user.repository.UserRepository;
+
+import static com.wwun.acme.user.enums.CategoriesEnum.*;
 
 import jakarta.validation.Valid;
 
@@ -59,26 +65,52 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public Optional<User> findById(UUID id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (!SecurityUtils.isAdmin(auth)) {
+            String username = auth.getName();
+            Optional<User> currentUser = userRepository.findByUsername(username);
+
+            if (currentUser.isEmpty() || !id.equals(currentUser.get().getId())) {
+                throw new RuntimeException("User doesn't exist or is not allowed to access");
+            }
+        }
+
         return userRepository.findById(id);
+    }
+
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
     @Override
     public Optional<User> update(UUID id, UserUpdateRequestDTO userUpdateRequestDTO) {
 
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found by id: " + id));
+        User user = this.findById(id).orElseThrow(() -> new RuntimeException("User doesn't exist or is not allowed to access"));
 
         if(!user.getEmail().equals(userUpdateRequestDTO.getEmail()) && userRepository.existsByEmail(userUpdateRequestDTO.getEmail())){
             throw new RuntimeException("Email already in use");
         }
 
-        List<Role> roles = roleRepository.findAllById(userUpdateRequestDTO.getRoleIds());
-        
-        if(roles.size() != userUpdateRequestDTO.getRoleIds().size()){
-            throw new RuntimeException("One or more roles are invalid");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        List<Role> roles;
+        if (SecurityUtils.isAdmin(auth)) {
+            roles = roleRepository.findAllById(userUpdateRequestDTO.getRoleIds());
+            if (roles.size() != userUpdateRequestDTO.getRoleIds().size()) {
+                throw new RuntimeException("One or more roles are invalid");
+            }
+        } else {
+            roles = user.getRoles();
         }
 
+        // Actualizar email
         user.setEmail(userUpdateRequestDTO.getEmail());
-        user.setPassword(passwordEncoder.encode(userUpdateRequestDTO.getPassword()));   //wwun
+
+        // Actualizar contraseña solo si es distinta de null/vacía
+        if (userUpdateRequestDTO.getPassword() != null && !userUpdateRequestDTO.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(userUpdateRequestDTO.getPassword()));
+        }
         user.setRoles(roles);
 
         return Optional.of(userRepository.save(user));
@@ -86,6 +118,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public void delete(UUID id) {
+        this.findById(id).orElseThrow(() -> new RuntimeException("User doesn't exist or is not allowed to access"));
         userRepository.deleteById(id);;
     }
 
