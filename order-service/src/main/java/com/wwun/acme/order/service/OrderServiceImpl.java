@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import com.wwun.acme.order.entity.OrderItem;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
+import com.wwun.acme.security.SecurityUtils;
 
 @Service
 public class OrderServiceImpl implements OrderService{
@@ -40,7 +42,10 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     public Order save(OrderCreateRequestDTO orderCreateRequestDTO) {
 
+        UUID userId = SecurityUtils.getCurrentUserId();
+
         Order order = orderMapper.toEntity(orderCreateRequestDTO);
+        order.setUserId(userId);
         order.setOrderDate(LocalDateTime.now());
 
         List<UUID> productsId = orderCreateRequestDTO.getItems().stream().map(OrderItemCreateRequestDTO::getProductId).toList();
@@ -75,16 +80,27 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public Optional<Order> findById(UUID id) {
-        return orderRepository.findById(id);
+        Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if(!SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication()) && !order.getUserId().equals(SecurityUtils.getCurrentUserId())){
+            throw new RuntimeException("Not allowed to access this order");
+        }
+        return Optional.of(order);
     }
 
     @Override
     public List<Order> findAll() {
-        return orderRepository.findAll();
+        if (SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication())) {
+            return orderRepository.findAll();
+        }
+        return orderRepository.findAllByUserId(SecurityUtils.getCurrentUserId());
     }
 
     @Override
     public List<Order> findAllByUserId(UUID userId){
+        if (!userId.equals(SecurityUtils.getCurrentUserId()) && !SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication())) {
+            throw new RuntimeException("Not allowed to access other users' orders");
+        }
         return orderRepository.findAllByUserId(userId);
     }
 
@@ -107,8 +123,10 @@ public class OrderServiceImpl implements OrderService{
     @Override
     @Transactional
     public void delete(UUID id) {
-        if(orderRepository.findById(id).isEmpty()){
-            throw new RuntimeException("Order not found");
+        Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if(!SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication()) && !order.getUserId().equals(SecurityUtils.getCurrentUserId())){
+            throw new RuntimeException("Not allowed to access this order");
         }
         orderRepository.deleteById(id);
     }

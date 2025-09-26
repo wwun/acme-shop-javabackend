@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,21 +30,25 @@ public class RoleController {
         this.roleMapper = roleMapper;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<RoleResponseDTO> save(@Valid @RequestBody RoleCreateRequestDTO roleCreateRequestDTO){
         return ResponseEntity.status(HttpStatus.CREATED).body(roleMapper.toResponseDTO(roleService.save(roleCreateRequestDTO)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<RoleResponseDTO> findById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(roleMapper.toResponseDTO(roleService.findById(id).get()));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<RoleResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody RoleUpdateRequestDTO roleUpdateRequestDTO){
         return ResponseEntity.status(HttpStatus.OK).body(roleMapper.toResponseDTO(roleService.update(id, roleUpdateRequestDTO).get()));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable UUID id){
         roleService.delete(id);

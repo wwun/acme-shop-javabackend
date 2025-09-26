@@ -5,7 +5,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import static com.wwun.acme.security.CategoriesEnum.*;
 
-public class SecurityUtils {
+import java.util.UUID;
+
+public final class SecurityUtils {
 
     public static boolean isAdmin(Authentication auth) {
         return auth.getAuthorities().stream()
@@ -13,6 +15,22 @@ public class SecurityUtils {
     }
 
     public static String getCurrentUsername() {
-        return SecurityContextHolder.getContext().getAuthentication().getName();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(principal instanceof AuthUserPrincipal userPrincipal){
+            return userPrincipal.getUsername();
+        }
+
+        return String.valueOf(principal);
+    }
+
+    public static UUID getCurrentUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(principal instanceof AuthUserPrincipal userPrincipal){
+            return userPrincipal.getUserId();
+        }
+
+        throw new IllegalStateException("No userId found in principal");
     }
 }

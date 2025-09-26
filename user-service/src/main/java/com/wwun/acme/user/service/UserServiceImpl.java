@@ -42,7 +42,6 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public User save(@Valid @RequestBody UserCreateRequestDTO userCreateRequestDTO) {
-        System.out.println("save serviceImpl");
         // Validar email único Username/email únicos → con existsByEmail y existsByUsername, Password seguro → puedes añadir un validador custom (mínimo 8 caracteres, mayúscula, número, etc, Roles válidos → no confiar en lo que envía el cliente, siempre validar con tu tabla roles
         if(userRepository.existsByEmail(userCreateRequestDTO.getEmail())){
             throw new RuntimeException("Email already in use");
@@ -66,13 +65,14 @@ public class UserServiceImpl implements UserService{
     @Override
     public Optional<User> findById(UUID id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
+        System.out.println(""+SecurityUtils.isAdmin(auth));
         if (!SecurityUtils.isAdmin(auth)) {
-            String username = auth.getName();
-            Optional<User> currentUser = userRepository.findByUsername(username);
+            UUID currentUserId = SecurityUtils.getCurrentUserId();
 
-            if (currentUser.isEmpty() || !id.equals(currentUser.get().getId())) {
+            if (!id.equals(currentUserId)) {
                 throw new RuntimeException("User doesn't exist or is not allowed to access");
+            }else{
+                System.out.println("inside");
             }
         }
 
@@ -94,14 +94,12 @@ public class UserServiceImpl implements UserService{
         }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        List<Role> roles;
+        List<Role> roles = user.getRoles();
         if (SecurityUtils.isAdmin(auth)) {
             roles = roleRepository.findAllById(userUpdateRequestDTO.getRoleIds());
             if (roles.size() != userUpdateRequestDTO.getRoleIds().size()) {
                 throw new RuntimeException("One or more roles are invalid");
             }
-        } else {
-            roles = user.getRoles();
         }
 
         // Actualizar email

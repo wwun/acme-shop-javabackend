@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -30,9 +31,10 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(UserDetails userDetails){
+    public String generateToken(UserDetails userDetails, Map<String, Object> extraClaims){
         List<String> roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
         return Jwts.builder()
+                .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .claim("roles", roles)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -64,6 +66,10 @@ public class JwtService {
                          .toList();
         }
         return List.of();
+    }
+
+    public String extractUserId(String token){
+        return extractClaim(token, claims -> claims.get("userId", String.class));
     }
 
     public boolean isTokenExpired(String token){

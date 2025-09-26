@@ -40,11 +40,13 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userMapper.toResponseDTO(userService.findById(id).get()));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @PatchMapping("/{id}")
     public ResponseEntity<UserResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody UserUpdateRequestDTO userUpdateRequestDTO){
         return ResponseEntity.status(HttpStatus.OK).body(userMapper.toResponseDTO(userService.update(id, userUpdateRequestDTO).get()));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable UUID id){
         userService.delete(id);

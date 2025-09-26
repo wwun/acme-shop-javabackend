@@ -3,3 +3,20 @@ spring:
         name: msvc-users
     config: 
         import: optional:configserver:http://config-server:8888
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health, info, metrics
+    endpoint:
+        health:
+            show-details: always
+    info:
+        env:
+            enabled: true
+
+info:
+    app:
+        name: User Service
+        description: handle users          

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,7 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<OrderResponseDTO>> getAllOrdersByUser(@PathVariable UUID userId){
         return ResponseEntity.status(HttpStatus.OK).body(orderService.findAllByUserId(userId)
             .stream()
@@ -43,21 +45,25 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OrderResponseDTO> getOrderById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(orderMapper.toResponseDTO(orderService.findById(id).get()));
     }
     
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OrderResponseDTO> createOrder(@Valid @RequestBody OrderCreateRequestDTO orderCreateRequestDTO){
         return ResponseEntity.status(HttpStatus.CREATED).body(orderMapper.toResponseDTO(orderService.save(orderCreateRequestDTO)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OrderResponseDTO> updateOrder(@PathVariable UUID id, @Valid @RequestBody OrderUpdateRequestDTO orderUpdateRequestDTO){
         return ResponseEntity.status(HttpStatus.OK).body(orderMapper.toResponseDTO(orderService.update(id, orderUpdateRequestDTO).get()));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<?> deleteOrder(@PathVariable UUID id){
         orderService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).build();

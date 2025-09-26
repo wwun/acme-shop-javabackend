@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
@@ -19,6 +20,7 @@ import com.wwun.acme.order.entity.OrderItem;
 import com.wwun.acme.order.mapper.OrderItemMapper;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
+import com.wwun.acme.security.SecurityUtils;
 import com.wwun.acme.order.feign.ProductClient;
 
 @Service
@@ -63,7 +65,14 @@ public class OrderItemServiceImpl implements OrderItemService{
 
     @Override
     public List<OrderItemResponseDTO> findAllByOrderId(UUID orderId){
-        
+
+        if(SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().anyMatch(authies -> authies.getAuthority().equals("ROLE_USER"))){
+            Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+            if(!order.getUserId().equals(SecurityUtils.getCurrentUserId())){
+                throw new RuntimeException("User not found");
+            }
+        }
+
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
 
         List<UUID> productIds = orderItems.stream()
@@ -87,6 +96,11 @@ public class OrderItemServiceImpl implements OrderItemService{
 
     @Override
     public Optional<OrderItem> update(UUID id, OrderItemUpdateRequestDTO orderItemUpdateRequestDTO) {
+
+        if(!SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication())){ //aditional validation
+            throw new RuntimeException("Not allowed to access this order item");
+        }
+
         OrderItem existing = orderItemRepository.findById(id).orElseThrow(() -> new RuntimeException("OrderItem not found with id: " + id));
         
         //debo validar los datos qe se reciben de orderItemUpdateRequestDTO? considerando qe ya se hace validaciones en el mismo deto como con @NotNull @PositiveOrZero y otros
@@ -108,6 +122,9 @@ public class OrderItemServiceImpl implements OrderItemService{
 
     @Override
     public void delete(UUID id) {
+        if(!SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication())){ //aditional validation
+            throw new RuntimeException("Not allowed to access this order item");
+        }
         //se me ocurre qe es la unica validacion qe puedo hacer para saber qe se esta eliminando algo, validando qe se esta intenand eliminar un producto existente pero no se si es innecesario porqe finalmente si no existia el item al final ya no existira tampoco
         if(orderItemRepository.findById(id).isEmpty()){
             throw new RuntimeException("Item not found with id: " + id);

@@ -1,6 +1,8 @@
 package com.wwun.acme.user.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,8 +41,6 @@ public class AuthServiceImpl implements AuthService{
     @Override
     public User register(RegisterRequestDTO registerRequestDTO) {
 
-        System.out.println("register auth service");
-
         if(userRepository.existsByEmail(registerRequestDTO.getEmail())){
             throw new RuntimeException("Email already in use"); //wwun
         }
@@ -60,7 +60,13 @@ public class AuthServiceImpl implements AuthService{
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequestDTO.getUsername(), authRequestDTO.getPassword()));
         
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String token = jwtService.generateToken(userDetails);
+
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new RuntimeException("User not found"));
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId().toString());
+
+        String token = jwtService.generateToken(userDetails, claims);
 
         return new AuthResponseDTO(token, userDetails.getUsername());
     }

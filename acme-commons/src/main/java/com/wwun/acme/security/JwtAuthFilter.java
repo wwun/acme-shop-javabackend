@@ -2,6 +2,7 @@ package com.wwun.acme.security;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -45,12 +46,17 @@ public class JwtAuthFilter extends OncePerRequestFilter{
         if(jwtService.isTokenValid(token)){
             String username = jwtService.extractUsername(token);
             List<String> roles = jwtService.extractRoles(token);
+            String userId = jwtService.extractUserId(token);
+
+            AuthUserPrincipal principal = new AuthUserPrincipal(UUID.fromString(userId), username);
 
             //convert to authorities
             List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
 
             //create authentication objet to set into the context
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(username, null, authorities);
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
+            // usernamePasswordAuthenticationToken.setDetails(userId);
 
             SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
         }
