@@ -21,14 +21,12 @@ import io.jsonwebtoken.security.Keys;
 //@Component    //this class is being anotated in commonsconfig
 public class JwtService {
 
-    @Value("${jwt.secret}") //value added in properties
-    private String secretKey;
-
-    @Value("${jwt.expiration}")
+    private final Key signInKey;
     private long jwtExpiration;
 
-    private Key getSignInKey(){
-        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    public JwtService(String secretKey, long jwtExpiration){
+        this.jwtExpiration = jwtExpiration;
+        this.signInKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(UserDetails userDetails, Map<String, Object> extraClaims){
@@ -39,7 +37,7 @@ public class JwtService {
                 .claim("roles", roles)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .signWith(signInKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -82,7 +80,7 @@ public class JwtService {
 
     public boolean isTokenValid(String token){
         try{
-            Jwts.parserBuilder().setSigningKey(getSignInKey()).build().parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(signInKey).build().parseClaimsJws(token);
             return true;
         }catch(Exception ex){
             return false;
@@ -96,7 +94,7 @@ public class JwtService {
 
     private Claims getAllClaims(String token){
         return Jwts.parserBuilder()
-                .setSigningKey(getSignInKey())
+                .setSigningKey(signInKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

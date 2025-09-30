@@ -11,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.wwun.acme.security.JwtAuthFilter;
+import com.wwun.acme.security.JwtService;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
@@ -39,10 +39,17 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception{
         return http.authorizeHttpRequests((authz) -> authz
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
                 .anyRequest().authenticated())
             .csrf(config -> config.disable())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
+    }
+
+    @Bean
+    public JwtAuthFilter jwtAuthFilter(JwtService jwtService) {
+        return new JwtAuthFilter(jwtService);
     }
 
 }

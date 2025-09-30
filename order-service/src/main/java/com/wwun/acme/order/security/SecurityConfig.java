@@ -7,7 +7,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Component;
 
-import com.wwun.acme.security.JwtAuthFilter;
+import com.wwun.acme.security.JwtService;
 
 @Component
 @EnableMethodSecurity(prePostEnabled = true)
@@ -18,10 +18,16 @@ public class SecurityConfig {
         return http
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/orders/health").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .csrf(csrf -> csrf.disable())
             .build();
+    }
+    
+    @Bean
+    public JwtAuthFilter jwtAuthFilter(JwtService jwtService) {
+        return new JwtAuthFilter(jwtService);
     }
 }

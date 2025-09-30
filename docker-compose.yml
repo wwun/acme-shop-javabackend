@@ -108,6 +108,9 @@ services:
       context: .
       dockerfile: ./api-gateway-server/Dockerfile
     container_name: api-gateway-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
     ports:
       - "8090:8090"
     depends_on:
@@ -123,3 +126,23 @@ services:
         condition: service_started 
       build-stage:
         condition: service_started
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
