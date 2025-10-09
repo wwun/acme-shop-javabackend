@@ -34,8 +34,11 @@ public class SecurityConfig {
                 .pathMatchers("/api/auth/**").permitAll()
                 .pathMatchers("/actuator/**").permitAll()
                 .pathMatchers("/api/health").permitAll()
-                .pathMatchers("/api/**").permitAll())
-                //.anyExchange().authenticated())
+                .pathMatchers("/webjars/**").permitAll()
+                .pathMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
+                .pathMatchers("/v3/api-docs/**").permitAll()
+                .pathMatchers("/api/**").permitAll()
+                )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
             .build();
     }

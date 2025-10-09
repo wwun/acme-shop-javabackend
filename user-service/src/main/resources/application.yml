@@ -12,9 +12,15 @@ management:
     metrics:
         tags:
             application: ${spring.application.name}
+    prometheus:
+        metrics:
+            export:
+                enabled: true
     endpoint:
         health:
             show-details: always
+        prometheus: 
+          enabled: true
     info:
         env:
             enabled: true
@@ -22,4 +28,4 @@ management:
 info:
     app:
         name: User Service
-        description: handle users          
+        description: handle users

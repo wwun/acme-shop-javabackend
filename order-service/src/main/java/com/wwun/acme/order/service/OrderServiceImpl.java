@@ -19,6 +19,7 @@ import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
 import com.wwun.acme.order.mapper.OrderMapper;
+import com.wwun.acme.order.metric.OrderMetrics;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
 import com.wwun.acme.security.SecurityUtils;
@@ -30,12 +31,14 @@ public class OrderServiceImpl implements OrderService{
     private final OrderItemRepository orderItemRepository;
     private final OrderMapper orderMapper;
     private final ProductClient productClient;
+    private final OrderMetrics orderMetrics;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, ProductClient productClient){
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, ProductClient productClient, OrderMetrics orderMetrics){
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderMapper = orderMapper;
         this.productClient = productClient;
+        this.orderMetrics = orderMetrics;
     }
 
     @Override
@@ -75,7 +78,9 @@ public class OrderServiceImpl implements OrderService{
         order.setItems(items);
         order.setTotal(total);
         
-        return orderRepository.save(order);
+        Order orderSaved = orderRepository.save(order);
+        orderMetrics.incrementOrdersCreated();
+        return orderSaved;
     }
 
     @Override

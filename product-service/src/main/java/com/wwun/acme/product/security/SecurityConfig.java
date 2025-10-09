@@ -18,7 +18,7 @@ public class SecurityConfig {
         return http.authorizeHttpRequests(authz -> authz
             .requestMatchers("/api/products/health").permitAll()
             .requestMatchers("/actuator/**").permitAll()
-            .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
+            .requestMatchers("/v3/api-docs/**").permitAll()
             .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .csrf(csrf -> csrf.disable())
