@@ -1,5 +1,6 @@
 com/wwun/acme/order/dto/product/CategoryResponseDTO.class
 com/wwun/acme/order/mapper/OrderMapperImpl.class
+com/wwun/acme/order/security/JwtAuthFilter.class
 com/wwun/acme/order/dto/product/ProductResponseDTO.class
 com/wwun/acme/order/service/OrderItemServiceImpl.class
 com/wwun/acme/order/repository/OrderItemRepository.class
@@ -12,12 +13,15 @@ com/wwun/acme/order/security/SecurityConfig.class
 com/wwun/acme/order/controller/HealthController.class
 com/wwun/acme/order/mapper/OrderItemMapperImpl.class
 com/wwun/acme/order/dto/order/orderItem/OrderItemCreateRequestDTO.class
+com/wwun/acme/order/metric/OrderProcessingTime.class
 com/wwun/acme/order/feign/ProductClient.class
 com/wwun/acme/order/dto/order/order/OrderCreateRequestDTO.class
 com/wwun/acme/OrderServiceApplication.class
 com/wwun/acme/order/exception/OrderItemNotFoundException.class
 com/wwun/acme/order/controller/OrderItemController.class
 com/wwun/acme/order/service/OrderServiceImpl.class
+com/wwun/acme/order/aspect/PerformanceAspect.class
+com/wwun/acme/order/metric/OrderMetrics.class
 com/wwun/acme/order/exception/InvalidOrderItemException.class
 com/wwun/acme/order/mapper/OrderItemMapper.class
 com/wwun/acme/order/exception/InvalidOrderException.class

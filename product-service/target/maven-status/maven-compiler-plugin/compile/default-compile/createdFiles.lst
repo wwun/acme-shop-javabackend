@@ -8,6 +8,7 @@ com/wwun/acme/product/service/ProductService.class
 com/wwun/acme/product/service/StockMovementServiceImpl.class
 com/wwun/acme/product/dto/StockMovementResponseDTO.class
 com/wwun/acme/product/dto/ProductCreateRequestDTO.class
+com/wwun/acme/product/metric/CacheMetrics.class
 com/wwun/acme/product/dto/CategoryCreateRequestDTO.class
 com/wwun/acme/product/exception/CategoryNotFoundException.class
 com/wwun/acme/product/service/StockMovementService.class
@@ -18,6 +19,7 @@ com/wwun/acme/product/exception/ProductNotFoundException.class
 com/wwun/acme/product/service/CategoryService.class
 com/wwun/acme/product/repository/CategoryRepository.class
 com/wwun/acme/product/controller/ProductController.class
+com/wwun/acme/product/security/JwtAuthFilter.class
 com/wwun/acme/product/enums/StockOperation.class
 com/wwun/acme/product/exception/InsufficientStockException.class
 com/wwun/acme/product/dto/HandlerExceptionDTO.class
@@ -27,6 +29,7 @@ com/wwun/acme/product/dto/ProductResponseDTO.class
 com/wwun/acme/product/entity/StockMovement.class
 com/wwun/acme/product/exception/InvalidCategoryException.class
 com/wwun/acme/product/exception/InvalidProductException.class
+com/wwun/acme/product/redis/RedisConfig.class
 com/wwun/acme/product/controller/GlobalExceptionHandler.class
 com/wwun/acme/product/service/CategoryServiceImpl.class
 com/wwun/acme/product/security/SecurityConfig.class

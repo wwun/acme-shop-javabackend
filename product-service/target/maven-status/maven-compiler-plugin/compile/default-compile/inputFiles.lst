@@ -24,9 +24,12 @@
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/exception/ProductNotFoundException.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/mapper/CategoryMapper.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/mapper/ProductMapper.java
+/home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/metric/CacheMetrics.java
+/home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/redis/RedisConfig.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/repository/CategoryRepository.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/repository/ProductRepository.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/repository/StockMovementRepository.java
+/home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/security/JwtAuthFilter.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/security/SecurityConfig.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/service/CategoryService.java
 /home/william/Documents/portfolio/acme-shop/product-service/src/main/java/com/wwun/acme/product/service/CategoryServiceImpl.java

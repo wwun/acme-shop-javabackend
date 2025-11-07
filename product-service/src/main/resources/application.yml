@@ -11,7 +11,7 @@ management:
                 include: health, info, metrics, prometheus
     metrics:
         tags:
-            application: ${spring.application.name} 
+            application: ${spring.application.name}
     prometheus:
         metrics:
             export:

@@ -1,0 +1,33 @@
+spring:
+    application:
+        name: msvc-carts
+    config: 
+        import: optional:configserver:http://config-server:8888
+    profiles:
+        active: docker
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health, info, metrics, prometheus
+    metrics:
+        tags:
+            application: ${spring.application.name}
+    prometheus:
+        metrics:
+            export:
+                enabled: true
+    endpoint:
+        health:
+            show-details: always
+        prometheus:
+            enabled: true
+    info:
+        env:
+            enabled: true
+
+info:
+    app:
+        name: Redis Service
+        description: handle cart

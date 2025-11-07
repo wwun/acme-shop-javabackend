@@ -1,3 +1,8 @@
+networks:
+  acme-net:
+    name: acme-net
+    driver: bridge
+
 services:
 
   build-stage:
@@ -6,16 +11,21 @@ services:
       dockerfile: Dockerfile.base
     image: acme-build #local label to be used by other services
     command: ["true"]
+    networks:
+      - acme-net
 
   config-server:
     build:
       context: .
       dockerfile: ./config-server/Dockerfile  # directorio relativo al archivo docker-compose.yml
     container_name: config-server
-    depends_on:
-      - build-stage
     ports:
       - "8888:8888"
+    networks:
+      - acme-net
+    depends_on:
+      build-stage:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep -q '\"status\"\\s*:\\s*\"UP\"'"]
       interval: 10s
@@ -30,6 +40,8 @@ services:
     container_name: eureka-server
     ports:
       - "8761:8761"
+    networks:
+      - acme-net
     depends_on:
       config-server:
         condition: service_healthy
@@ -47,21 +59,21 @@ services:
       context: .
       dockerfile: ./user-service/Dockerfile
     container_name: user-service
+    ports:
+      - "8081:8001"
+    networks:
+      - acme-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    #command: ["tail", "-f", "/dev/null"]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
-    ports:
-      - "8081:8001"
-    depends_on:
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      build-stage:
-        condition: service_started
-    #command: ["tail", "-f", "/dev/null"]
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8001/actuator/health | grep -q '\"status\"\\s*:\\s*\"UP\"'"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -72,77 +84,117 @@ services:
       context: .
       dockerfile: ./product-service/Dockerfile
     container_name: product-service
+    ports:
+      - "8077:8001"
+    networks:
+      - acme-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
-    ports:
-      - "8077:8001"
-    depends_on:
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      build-stage:
-        condition: service_started
-
+      
   order-service:
     build:
       context: .
       dockerfile: ./order-service/Dockerfile
     container_name: order-service
+    ports:
+      - "8088:8001"
+    networks:
+      - acme-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+      
+  cart-service:
+    build:
+      context: .
+      dockerfile: ./cart-service/Dockerfile
+    container_name: cart-service
     ports:
-      - "8088:8001"
+      - "8085:8001"
+    networks:
+      - acme-net
     depends_on:
-      config-server:
-        condition: service_healthy
       eureka-server:
         condition: service_healthy
-      build-stage:
-        condition: service_started
-
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      #- SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+      #- EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      
   api-gateway-server:
     build:
       context: .
       dockerfile: ./api-gateway-server/Dockerfile
     container_name: api-gateway-server
+    ports:
+      - "8090:8090"
+    networks:
+      - acme-net
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
-    ports:
-      - "8090:8090"
     depends_on:
-      config-server:
-        condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
       user-service:
         condition: service_started
       product-service:
         condition: service_started
       order-service:
-        condition: service_started 
-      build-stage:
         condition: service_started
-
+      cart-service:
+        condition: service_started
+      
   prometheus:
     image: prom/prometheus
     container_name: prometheus
     ports:
       - "9090:9090"
+    networks:
+      - acme-net
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     depends_on:
       - user-service
       - product-service
       - order-service
+      - cart-service
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - acme-net
+    depends_on:
+      product-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
 
   grafana:
     image: grafana/grafana
     container_name: grafana
     ports:
       - "3000:3000"
+    networks:
+      - acme-net
     depends_on:
       - prometheus

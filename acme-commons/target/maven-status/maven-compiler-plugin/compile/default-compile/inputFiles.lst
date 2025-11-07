@@ -1,8 +1,7 @@
 /home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/AuthUserPrincipal.java
 /home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/CategoriesEnum.java
 /home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/CommonsConfig.java
-/home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/JwtAuthFilter.java
+/home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/JwtAuthConverter.java
 /home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/JwtService.java
 /home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/SecurityUtils.java
-/home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/ServletSecurityConfig.java
 /home/william/Documents/portfolio/acme-shop/acme-commons/src/main/java/com/wwun/acme/security/TokenJwtConfig.java

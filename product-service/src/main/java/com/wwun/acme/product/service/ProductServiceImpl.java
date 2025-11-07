@@ -7,6 +7,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +22,10 @@ import com.wwun.acme.product.entity.Product;
 import com.wwun.acme.product.entity.StockMovement;
 import com.wwun.acme.product.exception.CategoryNotFoundException;
 import com.wwun.acme.product.exception.InsufficientStockException;
-import com.wwun.acme.product.exception.InvalidProductException;
 import com.wwun.acme.product.exception.InvalidStockAmountException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
+import com.wwun.acme.product.metric.CacheMetrics;
 import com.wwun.acme.product.repository.CategoryRepository;
 import com.wwun.acme.product.repository.ProductRepository;
 import com.wwun.acme.product.repository.StockMovementRepository;
@@ -31,14 +35,17 @@ import com.wwun.acme.product.enums.StockOperation;
 @Service
 public class ProductServiceImpl implements ProductService{
 
+    //private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
+
     // repository which contains use cases for CRUD operations
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final ProductMapper productMapper;
-
-    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, StockMovementRepository stockMovementRepository, ProductMapper productMapper) {
+    //private final RedisTemplate<String, Object> redisTemplate;
+    
+    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, StockMovementRepository stockMovementRepository, ProductMapper productMapper, CacheMetrics cacheMetrics) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.stockMovementRepository = stockMovementRepository;
@@ -46,155 +53,115 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
+    @Cacheable(cacheNames = "productsAll", key = "'ALL'")
     public List<Product> findAll() {
-        return (List<Product>)productRepository.findAll();
+        return productRepository.findAll();
     }
 
     @Override
+    @Cacheable(cacheNames = "productById", key = "#id")
     public Optional<Product> findById(UUID id) {
         return productRepository.findById(id);
     }
 
     @Override
     @Transactional  //preguntar por propagation y isolation
+    @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
     public Product save(ProductCreateRequestDTO productCreateRequestDTO) {
-        Category category = categoryRepository.findById(productCreateRequestDTO.getCategoryId()).orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+        Category category = categoryRepository.findById(productCreateRequestDTO.getCategoryId())
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
         Product product = productMapper.toEntity(productCreateRequestDTO);
-        if(!isValidProduct(product)){
-            throw new InvalidProductException("Invalid product data in DTO");
-        }
         product.setCategory(category);
-        return productRepository.save(product);
-    }
-
-    @Transactional
-    private Product save(Product product) {
         return productRepository.save(product);
     }
 
     @Override
     @Transactional
-    public Optional<Product> update(UUID id, ProductUpdateRequestDTO productUpdateRequestDTO) {
-
-        if(productRepository.findById(id).isEmpty()){
-            throw new ProductNotFoundException("Product not found with id: " + id);
-        }
-
-        Product product = productMapper.toEntity(productUpdateRequestDTO);
-        if(!isValidProduct(product)){
-            throw new InvalidProductException("Invalid product data in DTO");
-        }
-
-        return productRepository.findById(id)
-        .map(existing -> {
-            existing.setName(product.getName());
-            existing.setPrice(product.getPrice());
-            existing.setStock(product.getStock());
-
-            Category category = null;
-
-            if(existing.getCategory().getId()!=productUpdateRequestDTO.getCategoryId()){
-                category = categoryRepository.findById(productUpdateRequestDTO.getCategoryId()).orElseThrow(() -> new CategoryNotFoundException("Category not found"));
-            }else{
-                category = categoryRepository.findById(existing.getCategory().getId()).orElseThrow(() -> new CategoryNotFoundException("Category not found"));
-            }
-            
-            existing.setCategory(category);
-
+    @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
+    public Optional<Product> update(UUID productId, ProductUpdateRequestDTO productUpdateRequestDTO) {
+        return productRepository.findById(productId).map(existing -> {
+            existing.setName(productUpdateRequestDTO.getName());
+            existing.setPrice(productUpdateRequestDTO.getPrice());
+            existing.setStock(productUpdateRequestDTO.getStock());
+            existing.setCategory(categoryRepository.findById(productUpdateRequestDTO.getCategoryId())
+                    .orElseThrow(() -> new CategoryNotFoundException("Category not found")));
             return productRepository.save(existing);
         });
     }
 
     @Override
     @Transactional
-    public void delete(UUID id) {
+    @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
+    public void delete(UUID productId) {
+        if (!productRepository.existsById(productId))
+            throw new ProductNotFoundException("Product not found with id: " + productId);
 
-        if(productRepository.findById(id).isEmpty())
-            throw new ProductNotFoundException("Product not found with id: " + id);
-
-        productRepository.deleteById(id);
+        productRepository.deleteById(productId);
     }
 
     @Override
     @Transactional
-    public Optional<Product> updateStock(UUID id, int amount) { //if the amount want to be set directly
+    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
+    public Optional<Product> updateStock(UUID id, int amount) {
+        if (amount < 0)
+            throw new InvalidStockAmountException("Stock amount cannot be negative");
 
-        if(amount < 0) {
-            throw new InvalidStockAmountException("Stock ammount cannot be negative");
-        }
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
+
+        product.setStock(amount);
+        Product updated = productRepository.save(product);
         
-        if(!productRepository.existsById(id)){
-            throw new ProductNotFoundException("Product not found with id: " + id);
-        }            
+        stockMovementRepository.save(
+            new StockMovement(LocalDateTime.now(), amount, StockOperation.SET, updated)
+        );
 
-        return productRepository.findById(id)
-        .map(product -> {
-            if(product.getStock() == null){
-                product.setStock(0);
-            }
-            product.setStock(amount);
-            Product p = productRepository.save(product);
-            if(p!=null){
-                StockMovement stockMovement = new StockMovement(LocalDateTime.now(), amount, StockOperation.SET, p);
-                stockMovementRepository.save(stockMovement);
-            }
-            return p;
-        });
+        return Optional.of(updated);
     }
+
 
     @Override
     @Transactional
-    public Optional<Product> increaseStock(UUID id, int amount){
-        
-        if(amount <= 0) {
-            throw new InvalidStockAmountException("Stock ammount cannot be zero or negative");
-        }
-        
-        if(!productRepository.existsById(id)){
-            throw new ProductNotFoundException("Product not found with id: " + id);
-        }
+    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
+    public Optional<Product> increaseStock(UUID id, int amount) {
+        if (amount <= 0)
+            throw new InvalidStockAmountException("Increase amount must be positive");
 
-        return productRepository.findById(id)
-        .map(product -> {
-            if(product.getStock() == null){
-                product.setStock(0);
-            }
-            product.setStock(product.getStock()+amount);
-            Product p = productRepository.save(product);
-            if(p!=null){
-                StockMovement stockMovement = new StockMovement(LocalDateTime.now(), amount, StockOperation.DECREASE, p);
-                stockMovementRepository.save(stockMovement);
-            }
-            return p;
-        });
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
+
+        product.setStock(product.getStock() == null ? amount : product.getStock() + amount);
+        Product updated = productRepository.save(product);
+
+        stockMovementRepository.save(
+            new StockMovement(LocalDateTime.now(), amount, StockOperation.INCREASE, updated)
+        );
+
+        return Optional.of(updated);
     }
+
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
     public Optional<Product> decreaseStock(UUID id, int amount) {
+        if (amount <= 0)
+            throw new InvalidStockAmountException("Decrease amount must be positive");
 
-        if(amount <= 0) {
-            throw new InvalidStockAmountException("Stock ammount cannot be zero or negative, this value will be decreased from the current stock");
-        }
-        
-        if(!productRepository.existsById(id)){
-            throw new ProductNotFoundException("Product not found with id: " + id);
-        }
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
 
-        return productRepository.findById(id)
-        .flatMap(product -> {
-            if (product.getStock() == null || product.getStock() < amount) {
-                throw new InsufficientStockException("Insufficient stock for product with id: " + id);
-            } else {
-                product.setStock(product.getStock() - amount);
-                Product p = productRepository.save(product);
-                if(p!=null){
-                    StockMovement stockMovement = new StockMovement(LocalDateTime.now(), amount, StockOperation.INCREASE, p);
-                    stockMovementRepository.save(stockMovement);
-                }
-                return Optional.of(p);
-            }
-        });
+        if (product.getStock() == null || product.getStock() < amount)
+            throw new InsufficientStockException("Insufficient stock: " + id);
+
+        product.setStock(product.getStock() - amount);
+        Product updated = productRepository.save(product);
+
+        stockMovementRepository.save(
+            new StockMovement(LocalDateTime.now(), amount, StockOperation.DECREASE, updated)
+        );
+
+        return Optional.of(updated);
     }
 
     @Override
