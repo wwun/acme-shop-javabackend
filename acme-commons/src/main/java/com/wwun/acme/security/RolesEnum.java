@@ -1,5 +1,5 @@
 package com.wwun.acme.security;
 
-public enum CategoriesEnum {
+public enum RolesEnum {
     ROLE_ADMIN, ROLE_USER
 }

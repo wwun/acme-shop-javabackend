@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,10 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(signInKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String generateToken(UUID userId, String username, String email, List<String> roles){
+        
     }
 
     public boolean validateToken(String token, UserDetails userDetails){

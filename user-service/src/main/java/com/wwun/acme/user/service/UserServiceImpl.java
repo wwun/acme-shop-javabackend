@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,8 +18,6 @@ import com.wwun.acme.user.entity.User;
 import com.wwun.acme.user.mapper.UserMapper;
 import com.wwun.acme.user.repository.RoleRepository;
 import com.wwun.acme.user.repository.UserRepository;
-
-import static com.wwun.acme.user.enums.CategoriesEnum.*;
 
 import jakarta.validation.Valid;
 

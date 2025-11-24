@@ -134,6 +134,26 @@ services:
       #- SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
       #- EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "8089:8001"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - ACME_JWT_SECRET=${ACME_JWT_SECRET}
+      - EUREKA_DEFAULT_ZONE=${EUREKA_DEFAULT_ZONE}
       
   api-gateway-server:
     build:

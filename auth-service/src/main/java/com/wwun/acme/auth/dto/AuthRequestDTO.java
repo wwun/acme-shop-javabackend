@@ -1,12 +1,10 @@
-package com.wwun.acme.user.dto.auth;
+package com.wwun.acme.auth.dto;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class AuthRequestDTO {
 
-    @Column(unique = true)
     @NotBlank
     @Size(max=100)
     private String username;

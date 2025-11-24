@@ -1,0 +1,10 @@
+spring:
+    application:
+        name: msvc-auth
+    config: 
+        import: optional:configserver:http://config-server:8888
+
+info:
+    app:
+        name: Auth Service
+        description: handle auth SSO

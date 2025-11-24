@@ -3,7 +3,7 @@ package com.wwun.acme.security;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import static com.wwun.acme.security.CategoriesEnum.*;
+import static com.wwun.acme.security.RolesEnum.*;
 
 import java.util.UUID;
 

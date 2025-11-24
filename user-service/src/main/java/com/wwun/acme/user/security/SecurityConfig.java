@@ -19,16 +19,16 @@ public class SecurityConfig {
 
     //authentication
     
-    private final AuthenticationConfiguration authenticationConfiguration;
+    // private final AuthenticationConfiguration authenticationConfiguration;
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration){
-        this.authenticationConfiguration = authenticationConfiguration;
-    }
+    // public SecurityConfig(AuthenticationConfiguration authenticationConfiguration){
+    //     this.authenticationConfiguration = authenticationConfiguration;
+    // }
 
-    @Bean
-    AuthenticationManager authenticationManager() throws Exception{
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+    // @Bean
+    // AuthenticationManager authenticationManager() throws Exception{
+    //     return authenticationConfiguration.getAuthenticationManager();
+    // }
 
     @Bean
     PasswordEncoder passwordEncoder(){
@@ -38,7 +38,7 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception{
         return http.authorizeHttpRequests((authz) -> authz
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/registration/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated())

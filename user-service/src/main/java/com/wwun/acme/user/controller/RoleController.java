@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.wwun.acme.user.dto.role.RoleCreateRequestDTO;
 import com.wwun.acme.user.dto.role.RoleResponseDTO;
@@ -20,6 +22,8 @@ import com.wwun.acme.user.service.RoleService;
 
 import jakarta.validation.Valid;
 
+@RestController
+@RequestMapping("/api/roles")
 public class RoleController {
 
     private final RoleService roleService;

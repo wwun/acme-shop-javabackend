@@ -11,8 +11,8 @@ public class HealthController {
     public String userHealth() {
         return "OK from users";
     }
-    @GetMapping("/auth/health")
+    @GetMapping("/registration/health")
     public String health() {
-        return "OK from auth";
+        return "OK from registration";
     }
 }
