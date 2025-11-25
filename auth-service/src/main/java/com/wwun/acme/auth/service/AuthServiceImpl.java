@@ -1,14 +1,6 @@
-package com.wwun.acme.user.service;
+package com.wwun.acme.auth.service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.wwun.acme.auth.dto.AuthRequestDTO;
@@ -36,9 +28,9 @@ public class AuthServiceImpl implements AuthService{
 
         List<String> roles = user.roles().stream().map(RoleResponseDTO::name).toList();
 
-        String token = jwtService.generateToken
+        String token = jwtService.generateToken(user.id(), user.username(), user.email(), roles);
 
-        return new AuthResponseDTO(token, userDetails.getUsername());
+        return new AuthResponseDTO(token, user.username(), user.email());
     }
 
 

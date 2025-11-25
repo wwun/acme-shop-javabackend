@@ -43,7 +43,18 @@ public class JwtService {
     }
 
     public String generateToken(UUID userId, String username, String email, List<String> roles){
-        
+        Map<String, Object> claims = Map.of(
+            "userId", userId.toString(),
+            "email", email,
+            "roles", roles
+        );
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(username)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(signInKey, SignatureAlgorithm.HS256)
+                .compact();
     }
 
     public boolean validateToken(String token, UserDetails userDetails){

@@ -9,10 +9,11 @@
     <version>1.0.0</version>
   </parent>
 
-  <groupId>com.acme.auth</groupId>
+  <groupId>com.wwun.acme.auth</groupId>
   <artifactId>auth-service</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <name>auth-service</name>
+  <description>Auth service for Acme Shop</description>
 
   <dependencies>
     <dependency>
