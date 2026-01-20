@@ -37,7 +37,8 @@ public class SecurityConfig {
                 .pathMatchers("/webjars/**").permitAll()
                 .pathMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
                 .pathMatchers("/v3/api-docs/**").permitAll()
-                .pathMatchers("/api/**").permitAll()
+                .pathMatchers("/api/oauth2/**", "/oauth2/**","/login/oauth2/**").permitAll()
+                .anyExchange().authenticated()
                 )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
             .build();

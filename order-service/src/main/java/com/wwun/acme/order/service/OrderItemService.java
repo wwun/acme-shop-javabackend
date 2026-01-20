@@ -11,7 +11,7 @@ import com.wwun.acme.order.entity.OrderItem;
 
 public interface OrderItemService {
 
-    OrderItem save(OrderItemCreateRequestDTO orderItemCreateRequestDTO);
+    OrderItem save(UUID orderId, OrderItemCreateRequestDTO orderItemCreateRequestDTO);
     Optional<OrderItem> findById(UUID id);
     List<OrderItem> findAll();
     //List<OrderItem> findAllByOrderId(UUID orderId);

@@ -142,6 +142,8 @@ services:
     container_name: auth-service
     ports:
       - "8089:8001"
+    networks:
+      - acme-net
     depends_on:
       config-server:
         condition: service_healthy
@@ -150,10 +152,11 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - ACME_JWT_SECRET=${ACME_JWT_SECRET}
-      - EUREKA_DEFAULT_ZONE=${EUREKA_DEFAULT_ZONE}
+      - GOOGLE_CLIENT_ID=1072666433714-ohe6bue7h1bjeamcijs9ecdjli83i7f4.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      - OAUTH2_REDIRECT_URI=http://localhost:8090/login/oauth2/code/{registrationId}
+      # - ACME_JWT_SECRET=${ACME_JWT_SECRET}
+      # - EUREKA_DEFAULT_ZONE=${EUREKA_DEFAULT_ZONE}
       
   api-gateway-server:
     build:

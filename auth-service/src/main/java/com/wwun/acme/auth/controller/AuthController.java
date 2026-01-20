@@ -12,7 +12,7 @@ import com.wwun.acme.auth.dto.AuthResponseDTO;
 import com.wwun.acme.auth.service.AuthService;
 
 @RestController
-@RequestMapping("auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;

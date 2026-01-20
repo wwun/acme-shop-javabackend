@@ -11,8 +11,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
+import com.wwun.acme.order.security.FeignSecurityConfig;
 
-@FeignClient(name="msvc-products")
+@FeignClient(name="msvc-products", configuration = FeignSecurityConfig.class)
 public interface ProductClient {
 
     @GetMapping("/api/products/{id}")

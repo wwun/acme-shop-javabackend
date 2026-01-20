@@ -3,6 +3,7 @@ package com.wwun.acme.user.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,9 +11,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.wwun.acme.security.RolesEnum;
 import com.wwun.acme.security.SecurityUtils;
 import com.wwun.acme.user.dto.User.UserCreateRequestDTO;
 import com.wwun.acme.user.dto.User.UserUpdateRequestDTO;
+import com.wwun.acme.user.dto.auth.OAuthUserUpsertRequestDTO;
 import com.wwun.acme.user.entity.Role;
 import com.wwun.acme.user.entity.User;
 import com.wwun.acme.user.mapper.UserMapper;
@@ -114,7 +117,52 @@ public class UserServiceImpl implements UserService{
     @Override
     public void delete(UUID id) {
         this.findById(id).orElseThrow(() -> new RuntimeException("User doesn't exist or is not allowed to access"));
-        userRepository.deleteById(id);;
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    public User upsertOAuthUser(OAuthUserUpsertRequestDTO oAuthUserUpsertRequestDTO){
+        if(oAuthUserUpsertRequestDTO.providerSub()!=null && !oAuthUserUpsertRequestDTO.providerSub().isBlank()){
+            Optional<User> userByProviderSub = userRepository.findByAuthProviderAndProviderSub(oAuthUserUpsertRequestDTO.authProvider(), oAuthUserUpsertRequestDTO.providerSub());
+            if(userByProviderSub.isPresent()){
+                User user = userByProviderSub.get();
+                user.setEmail(oAuthUserUpsertRequestDTO.email());
+                return userRepository.save(user);
+            }
+        }
+
+        Optional<User> userByEmail = userRepository.findByEmail(oAuthUserUpsertRequestDTO.email());
+        if(userByEmail.isPresent()){
+            User user = userByEmail.get();
+            user.setAuthProvider(oAuthUserUpsertRequestDTO.authProvider());
+            user.setProviderSub(oAuthUserUpsertRequestDTO.providerSub());
+            return userRepository.save(user);
+        }
+
+        Role defaultRole = roleRepository.findByName(RolesEnum.ROLE_USER.toString()).orElseThrow(() -> new RuntimeException("Role not found"));
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setAuthProvider(oAuthUserUpsertRequestDTO.authProvider());
+        user.setProviderSub(oAuthUserUpsertRequestDTO.providerSub());
+        user.setEmail(oAuthUserUpsertRequestDTO.email());
+        user.setUsername(generateUsernameFromEmail(oAuthUserUpsertRequestDTO.email()));
+        user.setRoles(List.of(defaultRole));
+
+        String password = UUID.randomUUID().toString();
+        user.setPassword(password);
+
+        return userRepository.save(user);
+    }
+
+    private String generateUsernameFromEmail(String email){
+        String base = email.split("@", 2)[0];
+        String username = base;
+        int attempts = 0;
+        while(userRepository.findByUsername(username).isPresent() && attempts < 100){
+            username = base + UUID.randomUUID().toString().substring(0, 8);
+            attempts++;
+        }
+        return username;
     }
 
 }

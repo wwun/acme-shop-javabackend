@@ -4,27 +4,26 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.wwun.acme.auth.dto.AuthRequestDTO;
-import com.wwun.acme.security.JwtService;
 import com.wwun.acme.auth.dto.AuthResponseDTO;
 import com.wwun.acme.auth.dto.RoleResponseDTO;
 import com.wwun.acme.auth.dto.UserAuthResponseDTO;
-import com.wwun.acme.auth.feign.UserClient;
+import com.wwun.acme.security.JwtService;
 
 @Service
 public class AuthServiceImpl implements AuthService{
 
-    private final UserClient userClient;
+    private final UserGatewayService userGatewayService;
     private final JwtService jwtService;
     
-    public AuthServiceImpl(UserClient userClient, JwtService jwtService){
-        this.userClient = userClient;
+    public AuthServiceImpl(UserGatewayService userGatewayService, JwtService jwtService){
+        this.userGatewayService = userGatewayService;
         this.jwtService = jwtService;        
     }
 
     @Override
     public AuthResponseDTO login(AuthRequestDTO authRequestDTO) {
         
-        UserAuthResponseDTO user = userClient.verify(authRequestDTO);
+        UserAuthResponseDTO user = userGatewayService.verify(authRequestDTO);
 
         List<String> roles = user.roles().stream().map(RoleResponseDTO::name).toList();
 

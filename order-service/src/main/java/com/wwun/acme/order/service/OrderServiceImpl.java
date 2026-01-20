@@ -30,14 +30,16 @@ public class OrderServiceImpl implements OrderService{
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderMapper orderMapper;
-    private final ProductClient productClient;
+    private final ProductGatewayService productGatewayService;
+    //private final ProductClient productClient;
     private final OrderMetrics orderMetrics;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, ProductClient productClient, OrderMetrics orderMetrics){
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, OrderMetrics orderMetrics, ProductGatewayService productGatewayService){ //ProductClient productClient){
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderMapper = orderMapper;
-        this.productClient = productClient;
+        this.productGatewayService = productGatewayService;
+        //this.productClient = productClient;
         this.orderMetrics = orderMetrics;
     }
 
@@ -53,7 +55,8 @@ public class OrderServiceImpl implements OrderService{
 
         List<UUID> productsId = orderCreateRequestDTO.getItems().stream().map(OrderItemCreateRequestDTO::getProductId).toList();
 
-        List<ProductResponseDTO> products = productClient.getAllById(productsId);
+        List<ProductResponseDTO> products = productGatewayService.getAllById(productsId);
+        //List<ProductResponseDTO> products = productClient.getAllById(productsId);
         
         //no puedo acceder directamente desde item al precio por el dto orderItemCreateRequestDTO qe se llama dede orderCreateDTO qe no trae ese dato, entonces lo qe se hace es traer el dato desde el mismo item, el usuario no puede modificar el precio de esta manera
         BigDecimal total = BigDecimal.ZERO;
@@ -112,17 +115,7 @@ public class OrderServiceImpl implements OrderService{
     @Override
     @Transactional
     public Optional<Order> update(UUID id, OrderUpdateRequestDTO orderUpdateRequestDTO) {
-
-        OrderItem existing = orderItemRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("OrderItem not found"));
-
-        //existing.setQuantity(orderUpdateRequestDTO.getQuantity());
-
-        //ProductResponseDTO product = productClient.getProductById(orderUpdateRequestDTO.getProductId());
-        //existing.setPriceAtPurchase(product.getPrice());
-
-        return Optional.empty();//Optional.of(orderItemRepository.save(existing));
-
+        throw new UnsupportedOperationException("Order update not implemented yet");
     }
 
     @Override

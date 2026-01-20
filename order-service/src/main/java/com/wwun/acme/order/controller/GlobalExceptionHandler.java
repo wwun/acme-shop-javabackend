@@ -12,6 +12,7 @@ import com.wwun.acme.order.exception.InvalidOrderException;
 import com.wwun.acme.order.exception.InvalidOrderItemException;
 import com.wwun.acme.order.exception.OrderItemNotFoundException;
 import com.wwun.acme.order.exception.OrderNotFoundException;
+import com.wwun.acme.order.exception.ProductServiceUnavailableException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -38,6 +39,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<HandlerExceptionDTO> handleInvalidOrderItemException(InvalidOrderItemException e){
         HandlerExceptionDTO error = new HandlerExceptionDTO("INVALID_ORDER_ITEM", e.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(ProductServiceUnavailableException.class)
+    public ResponseEntity<HandlerExceptionDTO> handlerProductServiceUnavailableException(ProductServiceUnavailableException e){
+        HandlerExceptionDTO error = new HandlerExceptionDTO("PRODUCT_SERVICE_UNAVAILABLE", e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE.value(), new Date());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
     }
 
     public HandlerExceptionDTO setErrorValues(String errorType, String errorMessage, Integer statusCode, Date date){

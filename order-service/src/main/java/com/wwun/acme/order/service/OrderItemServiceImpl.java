@@ -29,25 +29,28 @@ public class OrderItemServiceImpl implements OrderItemService{
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderItemMapper orderItemMapper;
-    private final ProductClient productClient;
+    private final ProductGatewayService productGatewayService;
+    //private final ProductClient productClient;
 
-    public OrderItemServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, OrderItemMapper orderItemMapper, ProductClient productClient){
+    public OrderItemServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, OrderItemMapper orderItemMapper, ProductGatewayService productGatewayService){    //ProductClient productClient){
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderItemMapper = orderItemMapper;
-        this.productClient = productClient;
+        this.productGatewayService = productGatewayService;
+        //this.productClient = productClient;
     }
 
     @Override
-    public OrderItem save(OrderItemCreateRequestDTO orderItemCreateRequestDTO) {
+    public OrderItem save(UUID orderId, OrderItemCreateRequestDTO orderItemCreateRequestDTO) {
 
-        Order order = orderRepository.findById(orderItemCreateRequestDTO.getOrderId()).orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
 
         OrderItem orderItem = orderItemMapper.toEntity(orderItemCreateRequestDTO);
 
         orderItem.setOrder(order);
 
-        orderItem.setPriceAtPurchase(productClient.getProductPrice(orderItemCreateRequestDTO.getProductId()));
+        orderItem.setPriceAtPurchase(productGatewayService.getProductPrice(orderItemCreateRequestDTO.getProductId()));
+        //orderItem.setPriceAtPurchase(productClient.getProductPrice(orderItemCreateRequestDTO.getProductId()));
 
         return orderItemRepository.save(orderItem);
 
@@ -79,7 +82,8 @@ public class OrderItemServiceImpl implements OrderItemService{
                 .map(OrderItem::getProductId)
                 .collect(Collectors.toList());
 
-        List<ProductResponseDTO> products = productClient.getAllById(productIds);
+        List<ProductResponseDTO> products = productGatewayService.getAllById(productIds);
+        //List<ProductResponseDTO> products = productClient.getAllById(productIds);
 
         Map<UUID, ProductResponseDTO> productsMaps = products.stream()
                 .collect(Collectors.toMap(ProductResponseDTO::getId, Function.identity()));

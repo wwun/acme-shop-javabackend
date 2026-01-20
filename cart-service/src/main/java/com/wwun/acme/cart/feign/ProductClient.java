@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.wwun.acme.cart.dto.product.ProductResponseDTO;
+import com.wwun.acme.cart.security.FeignSecurityConfig;
 
-@FeignClient(name="msvc-products")
+@FeignClient(name="msvc-products", configuration = FeignSecurityConfig.class)
 public interface ProductClient {
 
     @GetMapping("/api/products/{id}")

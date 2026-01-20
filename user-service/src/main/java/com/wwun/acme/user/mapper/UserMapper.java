@@ -7,6 +7,7 @@ import org.mapstruct.Mappings;
 import com.wwun.acme.user.dto.User.UserCreateRequestDTO;
 import com.wwun.acme.user.dto.User.UserResponseDTO;
 import com.wwun.acme.user.dto.User.UserUpdateRequestDTO;
+import com.wwun.acme.user.dto.auth.UserAuthResponseDTO;
 import com.wwun.acme.user.entity.User;
 
 @Mapper(componentModel = "spring", uses = RoleMapper.class)  //wwun debo implementar o poner RoleMapper.class?
@@ -19,5 +20,7 @@ public interface UserMapper {
     User toEntity(UserUpdateRequestDTO userUpdateRequestDTO);
 
     UserResponseDTO toResponseDTO(User user);
+
+    UserAuthResponseDTO toAuthResponseDTO(User user);
 
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.wwun.acme.user.dto.auth.RegisterRequestDTO;
 import com.wwun.acme.user.entity.Role;
 import com.wwun.acme.user.entity.User;
+import com.wwun.acme.security.AuthProviderEnum;
 import com.wwun.acme.user.enums.RolesEnum;
 import com.wwun.acme.user.repository.RoleRepository;
 import com.wwun.acme.user.repository.UserRepository;
@@ -37,7 +38,13 @@ public class RegistrationServiceImpl implements RegistrationService{
 
         Role defaultRole = roleRepository.findByName(RolesEnum.ROLE_USER.toString()).orElseThrow(() -> new RuntimeException("Default role not found"));
 
-        User user = new User(registerRequestDTO.getUsername(), passwordEncoder.encode(registerRequestDTO.getPassword()), registerRequestDTO.getEmail(), List.of(defaultRole));
+        User user = new User();
+        user.setUsername(registerRequestDTO.getUsername());
+        user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword()));
+        user.setEmail(registerRequestDTO.getEmail());
+        user.setRoles(List.of(defaultRole));
+        user.setAuthProvider(AuthProviderEnum.LOCAL);
+        user.setProviderSub(null);
 
         return userRepository.save(user);
     }

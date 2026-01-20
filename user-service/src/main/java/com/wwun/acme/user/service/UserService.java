@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.wwun.acme.user.dto.User.UserCreateRequestDTO;
 import com.wwun.acme.user.dto.User.UserUpdateRequestDTO;
+import com.wwun.acme.user.dto.auth.OAuthUserUpsertRequestDTO;
 import com.wwun.acme.user.entity.User;
 
 public interface UserService {
@@ -14,5 +15,7 @@ public interface UserService {
     Optional<User> findByUsername(String username);
     Optional<User> update(UUID id, UserUpdateRequestDTO userUpdateRequestDTO);
     void delete(UUID id);
+
+    User upsertOAuthUser(OAuthUserUpsertRequestDTO oAuthUserUpsertRequestDTO);
 
 }

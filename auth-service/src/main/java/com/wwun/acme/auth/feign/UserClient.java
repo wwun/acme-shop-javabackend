@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.wwun.acme.auth.dto.AuthRequestDTO;
 import com.wwun.acme.auth.dto.UserAuthResponseDTO;
 
-@FeignClient(name = "msvc-user", path = "internal/auth")
+@FeignClient(name = "msvc-users", contextId = "userClient", path = "/internal/auth")
 public interface UserClient {
 
     @PostMapping("/verify")

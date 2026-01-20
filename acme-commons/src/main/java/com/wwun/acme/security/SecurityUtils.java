@@ -33,4 +33,18 @@ public final class SecurityUtils {
 
         throw new IllegalStateException("No userId found in principal");
     }
+
+    public static String getCurrentToken(){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if(auth == null){
+            return null;
+        }
+
+        Object credentials = auth.getCredentials();
+        if(credentials instanceof String token && !token.isBlank()){
+            return token;
+        }
+        
+        return null;
+    }
 }

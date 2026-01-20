@@ -24,7 +24,7 @@ import com.wwun.acme.order.service.OrderItemService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/orderItems")
+@RequestMapping("/api/orderItems/{orderId}/items")
 public class OrderItemController {
 
     private OrderItemService orderItemService;
@@ -35,21 +35,7 @@ public class OrderItemController {
         this.orderItemMapper = orderItemMapper;
     }
 
-    //no voy a agregar este metodo, entiendo qe si se qieren listar todos los orderItem de una order deberia ser por la misma order y no tiene sentido solicitar todas las items existentes en la bd
-    // @GetMapping("/{id}")
-    // public ResponseEntity<List<OrderResponseDTO>> getAll(@PathVariable UUID id){
-    //     return ResponseEntity.status(HttpStatus.OK).body(orderItemService.findAll()
-    //         .stream()
-    //         .map(orderItemMapper::toResponseDTO)
-    //         .toList());
-    // }
-
-    // @GetMapping("/{id}")
-    // public ResponseEntity<OrderItemResponseDTO> getOrderItemById(@PathVariable UUID id){
-    //     return ResponseEntity.status(HttpStatus.OK).body(orderItemMapper.toResponseDTO(orderItemService.findById(id).get()));
-    // }
-
-    @GetMapping("/{id}")
+    @GetMapping //("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<OrderItemResponseDTO>> findAllByOrderId(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(orderItemService.findAllByOrderId(id));
@@ -57,19 +43,19 @@ public class OrderItemController {
     
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<OrderItemResponseDTO> createOrderItem(@Valid @RequestBody OrderItemCreateRequestDTO orderItemCreateRequestDTO){
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderItemMapper.toResponseDTO(orderItemService.save(orderItemCreateRequestDTO)));
+    public ResponseEntity<OrderItemResponseDTO> createOrderItem(@PathVariable UUID orderId, @Valid @RequestBody OrderItemCreateRequestDTO orderItemCreateRequestDTO){
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderItemMapper.toResponseDTO(orderItemService.save(orderId, orderItemCreateRequestDTO)));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<OrderItemResponseDTO> updateOrderItem(@PathVariable UUID id, @Valid @RequestBody OrderItemUpdateRequestDTO orderItemUpdateRequestDTO){
+    public ResponseEntity<OrderItemResponseDTO> updateOrderItem(@PathVariable UUID orderId, @PathVariable UUID id, @Valid @RequestBody OrderItemUpdateRequestDTO orderItemUpdateRequestDTO){
         return ResponseEntity.status(HttpStatus.OK).body(orderItemMapper.toResponseDTO(orderItemService.update(id, orderItemUpdateRequestDTO).get()));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<?> deleteOrderItem(@PathVariable UUID id){
+    public ResponseEntity<?> deleteOrderItem(@PathVariable UUID orderId, @PathVariable UUID id){
         orderItemService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }

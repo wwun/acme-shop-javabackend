@@ -18,6 +18,7 @@ import com.wwun.acme.cart.dto.response.CartResponseDTO;
 import com.wwun.acme.cart.dto.response.CartSummaryDTO;
 import com.wwun.acme.cart.dto.response.CartSummaryItemDTO;
 import com.wwun.acme.cart.feign.ProductClient;
+import com.wwun.acme.cart.service.ProductGatewayService;
 
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -25,12 +26,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 public class CartQueryHandler {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ProductClient productClient;
+    private final ProductGatewayService productGatewayService;
     private final MeterRegistry meterRegistry;
 
-    public CartQueryHandler(RedisTemplate<String, Object> redisTemplate, ProductClient productClient, MeterRegistry meterRegistry){
+    public CartQueryHandler(RedisTemplate<String, Object> redisTemplate, ProductGatewayService productGatewayService, MeterRegistry meterRegistry){
         this.redisTemplate = redisTemplate;
-        this.productClient = productClient;
+        this.productGatewayService = productGatewayService;
         this.meterRegistry = meterRegistry;
     }
 
@@ -57,7 +58,7 @@ public class CartQueryHandler {
         for (var entry : entries.entrySet()) {
             UUID productId = UUID.fromString((String)entry.getKey());
             int quantity = ((Number)entry.getValue()).intValue();
-            ProductResponseDTO product = productClient.getById(productId);
+            ProductResponseDTO product = productGatewayService.getById(productId);
             items.add(new CartSummaryItemDTO(productId, product.name(), product.price(), quantity));
             totalItems += quantity;
             total = total.add(product.price().multiply(BigDecimal.valueOf(quantity)));

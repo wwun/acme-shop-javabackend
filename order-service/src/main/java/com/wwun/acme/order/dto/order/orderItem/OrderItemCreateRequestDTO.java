@@ -7,8 +7,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 public class OrderItemCreateRequestDTO {
 
-    @NotNull
-    private UUID orderId;
+    // @NotNull
+    // private UUID orderId;
 
     @NotNull
     private UUID productId;
@@ -33,12 +33,12 @@ public class OrderItemCreateRequestDTO {
         this.quantity = quantity;
     }
 
-    public UUID getOrderId() {
-        return orderId;
-    }
+    // public UUID getOrderId() {
+    //     return orderId;
+    // }
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
+    // public void setOrderId(UUID orderId) {
+    //     this.orderId = orderId;
+    // }
 
 }

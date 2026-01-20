@@ -17,12 +17,14 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception{
         return http
             .authorizeHttpRequests(authz -> authz
+                //.anyRequest().permitAll()
                 .requestMatchers("/api/carts/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .csrf(csrf -> csrf.disable())
+             .csrf(csrf -> csrf.disable()
+            )
             .build();
     }
     
