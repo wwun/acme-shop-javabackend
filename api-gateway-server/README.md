@@ -36,8 +36,9 @@ This service represents the **edge layer** of the system
 
 # Security
 
-- Configuration is loaded from the Config Server.
-- Service instances are discovered dynamically via Eureka
+- Acts as an OAuth2 Resource Server and validates JWTs for all protected routes
+- Public routes: /api/auth/**, /oauth2/**, /login/oauth2/**, Swagger, health
+- For authenticated requests, the gateway forwards the request to downstream services (Authorization header preserve
 
 # Config and Discovery
 

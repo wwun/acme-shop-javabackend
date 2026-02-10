@@ -50,9 +50,9 @@ It supports both **JWT-based authentication** and **OAuth2 login with Google**, 
 ## Dependencies
 
 - User Service (for user creation/lookup).
-- Config Server.
-- Eureka Server.
-- acme-commons` (shared security utilities)
+- Config Server
+- Eureka Server
+- acme-commons (shared security utilities)
 
 ## Environment Variables
 
@@ -61,7 +61,7 @@ OAuth2 requires external credentials:
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 
-These values are intentionally **not included** in the repositor
+These values are intentionally **not included** in the repository, use environment variables or a .env file for local development
 
 ## How to Run
 ### Option A — Run with Docker Compose (recommended)
