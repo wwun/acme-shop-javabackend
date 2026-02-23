@@ -8,13 +8,15 @@ A backend portfolio project built with **Java 17 + Spring Boot 3**, designed as 
 
 ## High-Level Architecture
 
-![Architecture Overview](./docs/diagrams/acme_component.png)
+<p align="center">
+  <img src="./docs/diagrams/acme_component.png"/>
+</p>
 
-This diagram illustrates system boundaries, request flow through the API Gateway, authentication and token validation, service discovery, and infrastructure components including database-per-service and Redis caching.
+This diagram shows the main service boundaries and request flow through the API Gateway, plus internal service-to-service calls (Feign with JWT propagation) and core platform components (service discovery, centralized config, database-per-service, and Redis-backed car.
 
-For detailed sequence and deployment diagrams, see the documentation folder:
+For detailed sequence and deployment diagrams, see the documentation folder: [View detailed diagrams](./docs/diagrams)
 
-[View detailed diagrams](./docs/diagrams)
+---
 
 ## Architecture Overview
 
