@@ -12,7 +12,7 @@ A backend portfolio project built with **Java 17 + Spring Boot 3**, designed as 
   <img src="./docs/diagrams/acme_component.png"/>
 </p>
 
-This diagram shows the main service boundaries and request flow through the API Gateway, plus internal service-to-service calls (Feign with JWT propagation) and core platform components (service discovery, centralized config, database-per-service, and Redis-backed car.
+This diagram shows the main service boundaries and request flow through the API Gateway, plus internal service-to-service calls (Feign with JWT propagation) and core platform components (service discovery, centralized config, database-per-service, and Redis-backed cart.
 
 For detailed sequence and deployment diagrams, see the documentation folder: [View detailed diagrams](./docs/diagrams)
 
