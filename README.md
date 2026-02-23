@@ -10,7 +10,7 @@ A backend portfolio project built with **Java 17 + Spring Boot 3**, designed as 
 
 ![Architecture Overview](./docs/diagrams/acme_component.png)
 
-This diagram illustrates system boundaries, request flow through the API Gateway, authentication and token validation, service discovery, and infrastructure components including database-per-service and Redis cachin.
+This diagram illustrates system boundaries, request flow through the API Gateway, authentication and token validation, service discovery, and infrastructure components including database-per-service and Redis caching.
 
 For detailed sequence and deployment diagrams, see the documentation folder:
 
