@@ -11,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.wwun.acme.order.feign.ProductClient;
 import com.wwun.acme.order.dto.order.order.OrderCreateRequestDTO;
 import com.wwun.acme.order.dto.order.order.OrderUpdateRequestDTO;
 import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
@@ -20,7 +19,6 @@ import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.metric.OrderMetrics;
-import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
 import com.wwun.acme.security.SecurityUtils;
 
@@ -28,18 +26,14 @@ import com.wwun.acme.security.SecurityUtils;
 public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final OrderMapper orderMapper;
     private final ProductGatewayService productGatewayService;
-    //private final ProductClient productClient;
     private final OrderMetrics orderMetrics;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, OrderMetrics orderMetrics, ProductGatewayService productGatewayService){ //ProductClient productClient){
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderMetrics orderMetrics, ProductGatewayService productGatewayService){ //ProductClient productClient){
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
         this.orderMapper = orderMapper;
         this.productGatewayService = productGatewayService;
-        //this.productClient = productClient;
         this.orderMetrics = orderMetrics;
     }
 
@@ -56,9 +50,7 @@ public class OrderServiceImpl implements OrderService{
         List<UUID> productsId = orderCreateRequestDTO.getItems().stream().map(OrderItemCreateRequestDTO::getProductId).toList();
 
         List<ProductResponseDTO> products = productGatewayService.getAllById(productsId);
-        //List<ProductResponseDTO> products = productClient.getAllById(productsId);
         
-        //no puedo acceder directamente desde item al precio por el dto orderItemCreateRequestDTO qe se llama dede orderCreateDTO qe no trae ese dato, entonces lo qe se hace es traer el dato desde el mismo item, el usuario no puede modificar el precio de esta manera
         BigDecimal total = BigDecimal.ZERO;
         List<OrderItem> items = new ArrayList<>();
 

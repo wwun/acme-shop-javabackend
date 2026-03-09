@@ -1,12 +1,10 @@
 package com.wwun.acme.order.dto.order.order;
 
 import java.util.List;
-import java.util.UUID;
 
 import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 public class OrderCreateRequestDTO {
 
