@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,6 +39,7 @@ import com.wwun.acme.order.metric.OrderMetrics;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
 import com.wwun.acme.security.AuthUserPrincipal;
+import com.wwun.acme.security.SecurityUtils;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
@@ -228,4 +231,89 @@ public class OrderServiceImplTest {
         verify(orderRepository, never()).findAllByUserId(any());
 
     }
+
+    void findById_shouldReturnOrder_whenUserIsAdmin(){
+        
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(userId);
+        BigDecimal total = new BigDecimal("100.00");
+        order.setTotal(total);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        Authentication auth = mock(Authentication.class);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))).when(auth).getAuthorities();
+
+        AuthUserPrincipal principal = new AuthUserPrincipal(userId, "wwun");
+        when(auth.getPrincipal()).thenReturn(principal);
+
+        //When
+        Optional<Order> orderOptional = orderServiceImpl.findById(orderId);
+
+        //Then
+        assertTrue(orderOptional.isPresent());
+        assertEquals(orderId, orderOptional.get().getId());
+        assertEquals(total, orderOptional.get().getTotal());
+
+        verify(orderRepository).findById(orderId);
+        
+    }
+
+    void findById_shouldThrow_whenUserIsNotOwnerAndNotAdmin(){
+        
+        //Given
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(userId);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        Authentication auth = mock(Authentication.class);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_USER"))).when(auth).getAuthorities();
+
+        AuthUserPrincipal principal = new AuthUserPrincipal(UUID.randomUUID(), "wwun");
+        when(auth.getPrincipal()).thenReturn(principal);
+
+        //When
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> orderServiceImpl.findById(orderId));
+
+        //Then
+        assertTrue(ex.getMessage().toLowerCase().contains("not allowed to access this order"));
+        
+        verify(orderRepository).findById(orderId);
+        
+    }
+
+    void findById_shouldReturnOrder_whenUserIsOwner(){
+        
+    }
+
+    // save_shouldCalculateTotalAndPersistOrder
+    // save_shouldThrow_whenProductNotFoundAndNotSave
+
+    // findAll_shouldReturnListOfOrdersByUser
+    // findAll_shouldReturnAllOrders_whenAdmin
+
+    // findById_shouldReturnOrder_whenAdmin
+    
+    // delete_shouldDeleteOrder_whenOwner
+    // delete_shouldDeleteOrder_whenAdmin
+    // delete_shouldThrow_whenUserIsNotOwnerAndNotAdmin
 }
