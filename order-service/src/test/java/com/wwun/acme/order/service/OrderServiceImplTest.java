@@ -232,7 +232,8 @@ public class OrderServiceImplTest {
 
     }
 
-    void findById_shouldReturnOrder_whenUserIsAdmin(){
+    @Test
+    void findById_shouldReturnOrder_whenAdmin(){
         
         UUID userId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
@@ -253,9 +254,6 @@ public class OrderServiceImplTest {
 
         doReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))).when(auth).getAuthorities();
 
-        AuthUserPrincipal principal = new AuthUserPrincipal(userId, "wwun");
-        when(auth.getPrincipal()).thenReturn(principal);
-
         //When
         Optional<Order> orderOptional = orderServiceImpl.findById(orderId);
 
@@ -268,6 +266,7 @@ public class OrderServiceImplTest {
         
     }
 
+    @Test
     void findById_shouldThrow_whenUserIsNotOwnerAndNotAdmin(){
         
         //Given
@@ -301,19 +300,82 @@ public class OrderServiceImplTest {
         
     }
 
+    @Test
     void findById_shouldReturnOrder_whenUserIsOwner(){
         
+        //Given
+        UUID userId = UUID.randomUUID();
+
+        UUID orderId = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(userId);
+
+        BigDecimal total = new BigDecimal("110.00");
+        order.setTotal(total);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        Authentication auth = mock(Authentication.class);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        AuthUserPrincipal principal = new AuthUserPrincipal(userId, "wwun");
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_USER"))).when(auth).getAuthorities();
+
+        when(auth.getPrincipal()).thenReturn(principal);
+
+        //When
+        Optional<Order> orderFound = orderServiceImpl.findById(orderId);
+
+        //Then
+        assertTrue(orderFound.isPresent());
+        assertEquals(orderId, orderFound.get().getId());
+        assertEquals(userId, orderFound.get().getUserId());
+        assertEquals(total, orderFound.get().getTotal());
+
+        verify(orderRepository).findById(orderId);
+
     }
 
-    // save_shouldCalculateTotalAndPersistOrder
-    // save_shouldThrow_whenProductNotFoundAndNotSave
+    @Test
+    void delete_shouldDeleteOrder_whenOwner(){
+
+        //Given        
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(userId);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        Authentication auth = mock(Authentication.class);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_USER"))).when(auth).getAuthorities();
+
+        AuthUserPrincipal principal = new AuthUserPrincipal(userId, "wwun");
+        when(auth.getPrincipal()).thenReturn(principal);
+
+        //When
+        orderServiceImpl.delete(orderId);
+
+        //Then
+        verify(orderRepository).deleteById(orderId);
+
+    }
 
     // findAll_shouldReturnListOfOrdersByUser
     // findAll_shouldReturnAllOrders_whenAdmin
 
-    // findById_shouldReturnOrder_whenAdmin
-    
-    // delete_shouldDeleteOrder_whenOwner
-    // delete_shouldDeleteOrder_whenAdmin
+    // delete_shouldDeleteOrder_whenAdmin*
     // delete_shouldThrow_whenUserIsNotOwnerAndNotAdmin
 }
