@@ -372,10 +372,71 @@ public class OrderServiceImplTest {
         verify(orderRepository).deleteById(orderId);
 
     }
+    
+    @Test
+    void delete_shouldDeleteOrder_whenAdmin(){
 
-    // findAll_shouldReturnListOfOrdersByUser
-    // findAll_shouldReturnAllOrders_whenAdmin
+        //Given
+        UUID orderId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
 
-    // delete_shouldDeleteOrder_whenAdmin*
-    // delete_shouldThrow_whenUserIsNotOwnerAndNotAdmin
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(userId);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        Authentication auth = mock(Authentication.class);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))).when(auth).getAuthorities();
+
+        //When
+        orderServiceImpl.delete(orderId);
+
+        //Then
+        verify(orderRepository).deleteById(orderId);
+
+    }
+
+    @Test
+    void delete_shouldThrow_whenUserIsNotOwnerAndNotAdmin() {
+
+        // Given
+        UUID ownerUserId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(ownerUserId);
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        Authentication auth = mock(Authentication.class);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_USER"))).when(auth).getAuthorities();
+
+        AuthUserPrincipal principal = new AuthUserPrincipal(otherUserId, "wwun");
+        when(auth.getPrincipal()).thenReturn(principal);
+
+        // When
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> orderServiceImpl.delete(orderId));
+
+        // Then
+        assertTrue(ex.getMessage().toLowerCase().contains("not allowed to access this order"));
+
+        verify(orderRepository).findById(orderId);
+        verify(orderRepository, never()).deleteById(any());
+
+    }
+    
 }
