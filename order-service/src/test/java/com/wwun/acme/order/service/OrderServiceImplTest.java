@@ -25,7 +25,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,7 +38,6 @@ import com.wwun.acme.order.metric.OrderMetrics;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
 import com.wwun.acme.security.AuthUserPrincipal;
-import com.wwun.acme.security.SecurityUtils;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
