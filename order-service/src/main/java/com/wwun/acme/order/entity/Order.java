@@ -33,6 +33,10 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> items;
 
+    UUID idempotencyKey;
+
+    String requestHash;
+
     public Order(UUID id, UUID userId, LocalDateTime orderDate, BigDecimal total, List<OrderItem> items){
         this.id = id;
         this.userId = userId;
@@ -83,6 +87,20 @@ public class Order {
         this.items = items;
     }
 
-    
+    public UUID getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(UUID idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
+    }
+
+    public String getRequestHash() {
+        return requestHash;
+    }
+
+    public void setRequestHash(String requestHash) {
+        this.requestHash = requestHash;
+    }    
 
 }
