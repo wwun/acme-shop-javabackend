@@ -172,13 +172,8 @@ public class ProductServiceImplTest
 
 	}
 
+	@Test
 	void increaseStock_shouldIncreaseStockAndSaveMovement_whenProductExistsAndAmountIsPositive(){
-
-		// stockMovementRepository.save(
-        //     new StockMovement(LocalDateTime.now(), amount, StockOperation.INCREASE, updated)
-        // );
-
-        // return Optional.of(updated
 
 		//Given
 		UUID productId = UUID.randomUUID();
@@ -207,7 +202,17 @@ public class ProductServiceImplTest
 
 	}
 
-	//delete_shouldThrow_whenProductDoesNotExist
+	void delete_shouldThrow_whenProductDoesNotExist(){
+
+		// productId) {
+        // if (!productRepository.existsById(productId))
+        //     throw new ProductNotFoundException("Product not found with id: " + productId);
+        // productRepository.deleteById(productId
+
+		
+
+	}
+
 	//increaseStock_shouldThrow_whenAmountIsZeroOrNegative
 	//decreaseStock_shouldThrow_whenInsufficientStock
 	//updateStock_shouldThrow_whenAmountNegative
