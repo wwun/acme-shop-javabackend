@@ -3,6 +3,7 @@ package com.wwun.acme.order.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,18 +48,19 @@ public class OrderServiceImpl implements OrderService{
     @Transactional
     public Order save(OrderCreateRequestDTO orderCreateRequestDTO) {
 
+        //como es qe pido idempotency desde el header?
+
         UUID userId = SecurityUtils.getCurrentUserId();
 
         Order order = orderMapper.toEntity(orderCreateRequestDTO);
+
         order.setUserId(userId);
         order.setOrderDate(LocalDateTime.now());
 
         List<UUID> productsId = orderCreateRequestDTO.getItems().stream().map(OrderItemCreateRequestDTO::getProductId).toList();
 
         List<ProductResponseDTO> products = productGatewayService.getAllById(productsId);
-        //List<ProductResponseDTO> products = productClient.getAllById(productsId);
         
-        //no puedo acceder directamente desde item al precio por el dto orderItemCreateRequestDTO qe se llama dede orderCreateDTO qe no trae ese dato, entonces lo qe se hace es traer el dato desde el mismo item, el usuario no puede modificar el precio de esta manera
         BigDecimal total = BigDecimal.ZERO;
         List<OrderItem> items = new ArrayList<>();
 
@@ -77,9 +79,18 @@ public class OrderServiceImpl implements OrderService{
             total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity())));
             items.add(item);
         }
+
+        items.sort(Comparator.comparing(OrderItem::getProductId));
         
         order.setItems(items);
         order.setTotal(total);
+
+        if(orderRepository.findByUserIdAndIdempotencyKey(userId, order.getIdempotencyKey()).isPresent()){
+            //convert to payload to be hashed
+            //compare to hash saved on db
+            //if equals return repository order
+            //if not return 409
+        }
         
         Order orderSaved = orderRepository.save(order);
         orderMetrics.incrementOrdersCreated();

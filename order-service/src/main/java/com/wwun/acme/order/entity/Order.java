@@ -33,6 +33,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> items;
 
+    @NotNull
     UUID idempotencyKey;
 
     String requestHash;

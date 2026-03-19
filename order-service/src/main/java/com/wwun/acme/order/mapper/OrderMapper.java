@@ -15,13 +15,15 @@ public interface OrderMapper {
     @Mappings({@Mapping(target = "id", ignore = true),
             @Mapping(target = "userId", ignore = true),
             @Mapping(target = "orderDate", ignore = true),
-            @Mapping(target = "total", ignore = true)})
+            @Mapping(target = "total", ignore = true),
+            @Mapping(target = "requestHash", ignore = true)})
     Order toEntity(OrderCreateRequestDTO orderCreateRequestDTO);
 
     @Mappings({@Mapping(target = "id", ignore = true),
             @Mapping(target = "userId", ignore = true),
             @Mapping(target = "orderDate", ignore = true),
-            @Mapping(target = "total", ignore = true)})
+            @Mapping(target = "total", ignore = true),
+            @Mapping(target = "requestHash", ignore = true)})
     Order toEntity(OrderUpdateRequestDTO orderUpdateRequestDTO);
 
     OrderResponseDTO toResponseDTO(Order order);
