@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.wwun.acme.order.dto.order.HandlerExceptionDTO;
 import com.wwun.acme.order.exception.InvalidOrderException;
 import com.wwun.acme.order.exception.InvalidOrderItemException;
+import com.wwun.acme.order.exception.OrderDuplicatedDifferentIKeyException;
 import com.wwun.acme.order.exception.OrderItemNotFoundException;
 import com.wwun.acme.order.exception.OrderNotFoundException;
 import com.wwun.acme.order.exception.ProductServiceUnavailableException;
@@ -45,6 +46,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<HandlerExceptionDTO> handlerProductServiceUnavailableException(ProductServiceUnavailableException e){
         HandlerExceptionDTO error = new HandlerExceptionDTO("PRODUCT_SERVICE_UNAVAILABLE", e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE.value(), new Date());
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
+    }
+
+    @ExceptionHandler(OrderDuplicatedDifferentIKeyException.class)
+    public ResponseEntity<HandlerExceptionDTO> handlerOrderDuplicatedDifferentIKeyException(OrderDuplicatedDifferentIKeyException e){
+        HandlerExceptionDTO error = new HandlerExceptionDTO("ORDER_DUPLICATED_DIFFERENT_IDENTITY", e.getMessage(), HttpStatus.CONFLICT.value(), new Date());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     public HandlerExceptionDTO setErrorValues(String errorType, String errorMessage, Integer statusCode, Date date){

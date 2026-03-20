@@ -13,16 +13,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.wwun.acme.order.feign.ProductClient;
+import com.wwun.acme.order.dto.order.order.OrderCreateHashPayload;
 import com.wwun.acme.order.dto.order.order.OrderCreateRequestDTO;
 import com.wwun.acme.order.dto.order.order.OrderUpdateRequestDTO;
 import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
+import com.wwun.acme.order.exception.OrderDuplicatedDifferentIKeyException;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.metric.OrderMetrics;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
+import com.wwun.acme.order.util.HashUtil;
 import com.wwun.acme.security.SecurityUtils;
 
 @Service
@@ -46,15 +49,14 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     @Transactional
-    public Order save(OrderCreateRequestDTO orderCreateRequestDTO) {
-
-        //como es qe pido idempotency desde el header?
+    public Order save(UUID idempotencyKey, OrderCreateRequestDTO orderCreateRequestDTO) {
 
         UUID userId = SecurityUtils.getCurrentUserId();
 
         Order order = orderMapper.toEntity(orderCreateRequestDTO);
 
         order.setUserId(userId);
+        order.setIdempotencyKey(idempotencyKey);
         order.setOrderDate(LocalDateTime.now());
 
         List<UUID> productsId = orderCreateRequestDTO.getItems().stream().map(OrderItemCreateRequestDTO::getProductId).toList();
@@ -68,7 +70,7 @@ public class OrderServiceImpl implements OrderService{
             ProductResponseDTO product = products.stream()
                 .filter(p -> p.getId().equals(itemDto.getProductId()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Producto not found"));
 
             OrderItem item = new OrderItem();
             item.setOrder(order);
@@ -85,11 +87,15 @@ public class OrderServiceImpl implements OrderService{
         order.setItems(items);
         order.setTotal(total);
 
-        if(orderRepository.findByUserIdAndIdempotencyKey(userId, order.getIdempotencyKey()).isPresent()){
-            //convert to payload to be hashed
-            //compare to hash saved on db
-            //if equals return repository order
-            //if not return 409
+        Optional<Order> duplicatedOrder = orderRepository.findByUserIdAndIdempotencyKey(userId, idempotencyKey);
+        if(duplicatedOrder.isPresent()){
+            String orderHashed = HashUtil.sha256(orderMapper.toOrderCreateHashPayload(order));
+            if(duplicatedOrder.get().getRequestHash().equals(orderHashed)){
+                return duplicatedOrder.get();
+            }
+            
+            throw new OrderDuplicatedDifferentIKeyException("Conflict, Order already exists with different key");
+            
         }
         
         Order orderSaved = orderRepository.save(order);

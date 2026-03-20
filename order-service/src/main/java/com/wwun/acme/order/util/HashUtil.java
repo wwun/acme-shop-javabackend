@@ -8,9 +8,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class HashUtil {
 
-    private final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public String sha256(Object input){
+    public static String sha256(Object input){
         try{
             String inputString = MAPPER.writeValueAsString(input);
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

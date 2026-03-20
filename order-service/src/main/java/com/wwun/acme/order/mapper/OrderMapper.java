@@ -4,6 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
+import com.wwun.acme.order.dto.order.order.OrderCreateHashPayload;
 import com.wwun.acme.order.dto.order.order.OrderCreateRequestDTO;
 import com.wwun.acme.order.dto.order.order.OrderResponseDTO;
 import com.wwun.acme.order.dto.order.order.OrderUpdateRequestDTO;
@@ -27,5 +28,7 @@ public interface OrderMapper {
     Order toEntity(OrderUpdateRequestDTO orderUpdateRequestDTO);
 
     OrderResponseDTO toResponseDTO(Order order);
+
+    OrderCreateHashPayload toOrderCreateHashPayload(Order order);
 
 }

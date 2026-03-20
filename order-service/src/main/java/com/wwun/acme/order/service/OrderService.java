@@ -10,7 +10,7 @@ import com.wwun.acme.order.entity.Order;
 
 public interface OrderService {
 
-    Order save(OrderCreateRequestDTO orderCreateRequestDTO);
+    Order save(UUID idempotencyKey, OrderCreateRequestDTO orderCreateRequestDTO);
     Optional<Order> findById(UUID id);
     List<Order> findAll();
     List<Order> findAllByUserId(UUID userId);
