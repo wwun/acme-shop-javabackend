@@ -253,12 +253,12 @@ public class OrderServiceImplTest {
         doReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))).when(auth).getAuthorities();
 
         //When
-        Optional<Order> orderOptional = orderServiceImpl.findById(orderId);
-
+        Order orderFound = orderServiceImpl.findById(orderId);
+        
         //Then
-        assertTrue(orderOptional.isPresent());
-        assertEquals(orderId, orderOptional.get().getId());
-        assertEquals(total, orderOptional.get().getTotal());
+        assertTrue(orderFound!=null);
+        assertEquals(orderId, orderFound.getId());
+        assertEquals(total, orderFound.getTotal());
 
         verify(orderRepository).findById(orderId);
         
@@ -327,13 +327,12 @@ public class OrderServiceImplTest {
         when(auth.getPrincipal()).thenReturn(principal);
 
         //When
-        Optional<Order> orderFound = orderServiceImpl.findById(orderId);
+        Order orderFound = orderServiceImpl.findById(orderId);
 
         //Then
-        assertTrue(orderFound.isPresent());
-        assertEquals(orderId, orderFound.get().getId());
-        assertEquals(userId, orderFound.get().getUserId());
-        assertEquals(total, orderFound.get().getTotal());
+        assertEquals(orderId, orderFound.getId());
+        assertEquals(userId, orderFound.getUserId());
+        assertEquals(total, orderFound.getTotal());
 
         verify(orderRepository).findById(orderId);
 

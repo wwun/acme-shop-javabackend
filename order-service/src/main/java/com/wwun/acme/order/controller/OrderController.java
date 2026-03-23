@@ -47,7 +47,7 @@ public class OrderController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OrderResponseDTO> getOrderById(@PathVariable UUID id){
-        return ResponseEntity.status(HttpStatus.OK).body(orderMapper.toResponseDTO(orderService.findById(id).get()));
+        return ResponseEntity.status(HttpStatus.OK).body(orderMapper.toResponseDTO(orderService.findById(id)));
     }
     
     @PostMapping

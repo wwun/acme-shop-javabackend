@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
+import com.wwun.acme.order.exception.OrderNotFoundException;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.metric.OrderMetrics;
 import com.wwun.acme.order.repository.OrderRepository;
@@ -79,13 +81,13 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    public Optional<Order> findById(UUID id) {
-        Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
+    public Order findById(UUID id) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if(!SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication()) && !order.getUserId().equals(SecurityUtils.getCurrentUserId())){
-            throw new RuntimeException("Not allowed to access this order");
+            throw new AccessDeniedException("Not allowed to access this order");
         }
-        return Optional.of(order);
+        return order;
     }
 
     @Override
