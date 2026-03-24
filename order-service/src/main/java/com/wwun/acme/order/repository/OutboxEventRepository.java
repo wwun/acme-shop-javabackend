@@ -6,8 +6,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.wwun.acme.order.entity.OutboxEvent;
+import com.wwun.acme.order.enums.OutboxEventStatus;
 
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID>{
 
-    List<OutboxEvent> findStatusOrderByCreatedAtAsc(String status);
+    List<OutboxEvent> findByStatusOrderByCreatedAtAsc(OutboxEventStatus status);
 }

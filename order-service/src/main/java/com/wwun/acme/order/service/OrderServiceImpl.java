@@ -99,11 +99,12 @@ public class OrderServiceImpl implements OrderService{
         Optional<Order> duplicatedOrder = orderRepository.findByUserIdAndIdempotencyKey(userId, idempotencyKey);
         if(duplicatedOrder.isPresent()){
             String orderHashed = HashUtil.sha256(orderMapper.toOrderCreateHashPayload(order));
+            order.setRequestHash(orderHashed);
             if(duplicatedOrder.get().getRequestHash().equals(orderHashed)){
                 return duplicatedOrder.get();
             }
             
-            throw new OrderDuplicatedDifferentIKeyException("Conflict, Order already exists with different key");
+            throw new OrderDuplicatedDifferentIKeyException("Conflict, Idempotency key already used with a different request payload");
             
         }
         
@@ -112,6 +113,9 @@ public class OrderServiceImpl implements OrderService{
         ObjectMapper objectMapper = new ObjectMapper();
 
         String orderAsJsonString = "";
+
+        //create a ordercreatedevent to be sent as a aparameter
+
         try{
             orderAsJsonString = objectMapper.writeValueAsString(orderSaved);
         }catch(JsonProcessingException ex){
@@ -119,7 +123,7 @@ public class OrderServiceImpl implements OrderService{
         }
 
         OutboxEvent outboxEvent = OutboxEvent.builder()
-            .aggregateId(order.getId())
+            .aggregateId(orderSaved.getId())
             .type(OutboxEventType.ORDER_CREATED.toString())
             .payload(orderAsJsonString)
             .build();
