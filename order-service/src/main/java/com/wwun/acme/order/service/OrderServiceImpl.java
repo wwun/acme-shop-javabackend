@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +23,18 @@ import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
+import com.wwun.acme.order.entity.OutboxEvent;
 import com.wwun.acme.order.exception.OrderDuplicatedDifferentIKeyException;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.metric.OrderMetrics;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
+import com.wwun.acme.order.repository.OutboxEventRepository;
 import com.wwun.acme.order.util.HashUtil;
 import com.wwun.acme.security.SecurityUtils;
+
+import com.wwun.acme.order.enums.OutboxEventType;
+import com.wwun.acme.order.enums.OutboxEventStatus;
 
 @Service
 public class OrderServiceImpl implements OrderService{
@@ -35,15 +43,16 @@ public class OrderServiceImpl implements OrderService{
     private final OrderItemRepository orderItemRepository;
     private final OrderMapper orderMapper;
     private final ProductGatewayService productGatewayService;
+    private final OutboxEventRepository outboxEventRepository;
     //private final ProductClient productClient;
     private final OrderMetrics orderMetrics;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, OrderMetrics orderMetrics, ProductGatewayService productGatewayService){ //ProductClient productClient){
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, OrderMetrics orderMetrics, ProductGatewayService productGatewayService, OutboxEventRepository outboxEventRepository){ //ProductClient productClient){
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderMapper = orderMapper;
         this.productGatewayService = productGatewayService;
-        //this.productClient = productClient;
+        this.outboxEventRepository = outboxEventRepository;
         this.orderMetrics = orderMetrics;
     }
 
@@ -99,6 +108,24 @@ public class OrderServiceImpl implements OrderService{
         }
         
         Order orderSaved = orderRepository.save(order);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String orderAsJsonString = "";
+        try{
+            orderAsJsonString = objectMapper.writeValueAsString(orderSaved);
+        }catch(JsonProcessingException ex){
+            throw new RuntimeException("Error serializing order evvent payload", ex);
+        }
+
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+            .aggregateId(order.getId())
+            .type(OutboxEventType.ORDER_CREATED.toString())
+            .payload(orderAsJsonString)
+            .build();
+
+        outboxEventRepository.save(outboxEvent);
+
         orderMetrics.incrementOrdersCreated();
         return orderSaved;
     }

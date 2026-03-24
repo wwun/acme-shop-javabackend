@@ -3,6 +3,8 @@ package com.wwun.acme.order.entity;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.wwun.acme.order.enums.OutboxEventStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,7 +17,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "outbox_events")
@@ -23,7 +24,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-@Setter
 public class OutboxEvent {
 
     @Id
@@ -52,6 +52,18 @@ public class OutboxEvent {
     void prePersist(){
         this.createdAt = Instant.now();
         this.status = "PENDING";
+    }
+
+    public void markAsPending(){
+        this.status = OutboxEventStatus.PENDING.name();
+    }
+
+    public void markAsProcessed(){
+        this.status = OutboxEventStatus.PROCESSED.name();
+    }
+
+    public void markAsFailed(){
+        this.status = OutboxEventStatus.FAILED.name();
     }
     
 }
