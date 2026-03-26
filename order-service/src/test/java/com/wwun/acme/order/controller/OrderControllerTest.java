@@ -74,7 +74,7 @@ public class OrderControllerTest {
         //Given
         UUID orderId = UUID.randomUUID();
 
-        when(orderService.findById(orderId)).thenThrow(new OrderNotFoundException("Order not found"));  //aca no pruebo ninguna logica, le debo decir exactamente qe devolver? y si lo dejo correr y pongo thenreturn(null)?
+        when(orderService.findById(orderId)).thenThrow(new OrderNotFoundException("Order not found"));
         
         mockMvc.perform(get("/api/orders/{id}", orderId))
             .andExpect(status().isNotFound())

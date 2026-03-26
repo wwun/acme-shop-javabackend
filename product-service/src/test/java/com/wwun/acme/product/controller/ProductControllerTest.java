@@ -5,6 +5,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import static org.hamcrest.Matchers.containsString;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,19 +15,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wwun.acme.product.dto.ProductCreateRequestDTO;
 import com.wwun.acme.product.dto.ProductResponseDTO;
 import com.wwun.acme.product.entity.Product;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.service.ProductService;
-import com.wwun.acme.product.service.ProductServiceImpl;
+
+import jakarta.validation.Valid;
 
 @WebMvcTest(ProductControllerTest.class)
 @Import(GlobalExceptionHandler.class)
@@ -71,8 +76,35 @@ public class ProductControllerTest {
 
     }
 
-    // getProductById_shouldReturn404_whenProductDoesNotExist
-    // createProduct_shouldReturn201_whenValidRequest
+    @Test
+    @WithMockUser(roles = "USER")
+    void getProductById_shouldReturn404_whenProductDoesNotExist() throws Exception{
+
+        UUID productId = UUID.randomUUID();
+
+        when(productService.findById(productId)).thenThrow(new ProductNotFoundException("Product not found with id: " +productId));
+
+        mockMvc.perform(get("/api/products/{id}", productId))
+            .andExpect(status().isNotFound())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message").value(containsString(productId.toString())));
+            
+            verify(productService).findById(productId);
+
+    }
+    
+    @Test
+    @WithMockUser("ADMIN")
+    void createProduct_shouldReturn201_whenValidRequest(){
+
+        // @Valid @RequestBody ProductCreateRequestDTO productCreateRequestDTO){
+        // Product product = productService.save(productCreateRequestDTO);
+        // return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toResponseDTO(product
+
+        
+
+    }
+    
     // createProduct_shouldReturn400_whenInvalidRequest
     // deleteProduct_shouldReturn200_whenDeleteSucceeds
     // deleteProduct_shouldReturn404_whenProductDoesNotExist
