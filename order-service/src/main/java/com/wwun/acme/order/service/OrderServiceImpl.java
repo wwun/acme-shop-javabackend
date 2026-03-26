@@ -2,6 +2,7 @@ package com.wwun.acme.order.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -23,36 +24,33 @@ import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
-import com.wwun.acme.order.entity.OutboxEvent;
+import com.wwun.acme.order.enums.OutboxEventType;
 import com.wwun.acme.order.exception.OrderDuplicatedDifferentIKeyException;
 import com.wwun.acme.order.mapper.OrderMapper;
+import com.wwun.acme.order.messaging.OutboxEventPublisher;
 import com.wwun.acme.order.metric.OrderMetrics;
-import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
-import com.wwun.acme.order.repository.OutboxEventRepository;
 import com.wwun.acme.order.util.HashUtil;
 import com.wwun.acme.security.SecurityUtils;
 
-import com.wwun.acme.order.enums.OutboxEventType;
-import com.wwun.acme.order.enums.OutboxEventStatus;
+import com.wwun.acme.order.event.OrderCreatedEvent;
+import com.wwun.acme.order.event.OrderItemEvent;
 
 @Service
 public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final OrderMapper orderMapper;
     private final ProductGatewayService productGatewayService;
-    private final OutboxEventRepository outboxEventRepository;
+    private final OutboxEventPublisher outboxEventPublisher;
     //private final ProductClient productClient;
     private final OrderMetrics orderMetrics;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderItemRepository orderItemRepository, OrderMetrics orderMetrics, ProductGatewayService productGatewayService, OutboxEventRepository outboxEventRepository){ //ProductClient productClient){
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderMetrics orderMetrics, ProductGatewayService productGatewayService, OutboxEventPublisher outboxEventPublisher){ //ProductClient productClient){
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
         this.orderMapper = orderMapper;
         this.productGatewayService = productGatewayService;
-        this.outboxEventRepository = outboxEventRepository;
+        this.outboxEventPublisher = outboxEventPublisher;
         this.orderMetrics = orderMetrics;
     }
 
@@ -102,34 +100,16 @@ public class OrderServiceImpl implements OrderService{
             order.setRequestHash(orderHashed);
             if(duplicatedOrder.get().getRequestHash().equals(orderHashed)){
                 return duplicatedOrder.get();
-            }
-            
+            }            
             throw new OrderDuplicatedDifferentIKeyException("Conflict, Idempotency key already used with a different request payload");
-            
         }
         
         Order orderSaved = orderRepository.save(order);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        String orderAsJsonString = "";
-
-        //create a ordercreatedevent to be sent as a aparameter
-
-        try{
-            orderAsJsonString = objectMapper.writeValueAsString(orderSaved);
-        }catch(JsonProcessingException ex){
-            throw new RuntimeException("Error serializing order evvent payload", ex);
-        }
-
-        OutboxEvent outboxEvent = OutboxEvent.builder()
-            .aggregateId(orderSaved.getId())
-            .type(OutboxEventType.ORDER_CREATED.toString())
-            .payload(orderAsJsonString)
-            .build();
-
-        outboxEventRepository.save(outboxEvent);
-
+        OrderCreatedEvent eventPayload = buildOrderCreatedEvent(orderSaved);
+        
+        outboxEventPublisher.publish(orderSaved.getId(), OutboxEventType.ORDER_CREATED, eventPayload);
+        
         orderMetrics.incrementOrdersCreated();
         return orderSaved;
     }
@@ -175,6 +155,13 @@ public class OrderServiceImpl implements OrderService{
             throw new RuntimeException("Not allowed to access this order");
         }
         orderRepository.deleteById(id);
+    }
+
+    private OrderCreatedEvent buildOrderCreatedEvent(Order order){
+
+        List<OrderItemEvent> itemEvents = order.getItems().stream().map(item -> new OrderItemEvent(item.getProductId(), item.getQuantity(), item.getPriceAtPurchase())).toList();
+
+        return new OrderCreatedEvent( order.getId(), order.getUserId(), order.getTotal(), order.getOrderDate().toInstant(ZoneOffset.UTC), itemEvents);
     }
 
 }
