@@ -16,13 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wwun.acme.order.dto.order.order.OrderCreateRequestDTO;
@@ -32,8 +28,6 @@ import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.exception.OrderNotFoundException;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.service.OrderService;
-
-import jakarta.validation.Valid;
 
 @WebMvcTest(OrderController.class)
 @Import(GlobalExceptionHandler.class)

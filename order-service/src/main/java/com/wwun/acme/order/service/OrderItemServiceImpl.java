@@ -21,7 +21,6 @@ import com.wwun.acme.order.mapper.OrderItemMapper;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
 import com.wwun.acme.security.SecurityUtils;
-import com.wwun.acme.order.feign.ProductClient;
 
 @Service
 public class OrderItemServiceImpl implements OrderItemService{

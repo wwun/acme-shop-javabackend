@@ -60,6 +60,7 @@ public class OrderServiceImplTest {
 
         // Given
         UUID userId = UUID.randomUUID();
+        UUID idempotencyKey = UUID.randomUUID();
 
         AuthUserPrincipal principal = new AuthUserPrincipal(userId, "wwun");
 
@@ -105,7 +106,7 @@ public class OrderServiceImplTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         // When
-        Order saved = orderServiceImpl.save(orderCreateRequestDTO);
+        Order saved = orderServiceImpl.save(idempotencyKey, orderCreateRequestDTO);
 
         // Then
         assertNotNull(saved);
@@ -127,6 +128,7 @@ public class OrderServiceImplTest {
 
         // Given
         UUID userId = UUID.randomUUID();
+        UUID idempotencyKey = UUID.randomUUID();
 
         AuthUserPrincipal principal = new AuthUserPrincipal(userId, "wwun");
 
@@ -165,7 +167,7 @@ public class OrderServiceImplTest {
 
         // When
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> orderServiceImpl.save(orderCreateRequestDTO));
+                () -> orderServiceImpl.save(idempotencyKey, orderCreateRequestDTO));
 
         // Then
         assertTrue(ex.getMessage().toLowerCase().contains("producto no encontrado"));
