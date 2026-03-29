@@ -1,8 +1,10 @@
 package com.wwun.acme.product.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -25,12 +27,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wwun.acme.product.dto.ProductCreateRequestDTO;
 import com.wwun.acme.product.dto.ProductResponseDTO;
+import com.wwun.acme.product.dto.ProductUpdateRequestDTO;
 import com.wwun.acme.product.entity.Product;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.service.ProductService;
 
-@WebMvcTest(ProductControllerTest.class)
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+
+@WebMvcTest(ProductController.class)
 @Import(GlobalExceptionHandler.class)
 public class ProductControllerTest {
 
@@ -85,7 +90,7 @@ public class ProductControllerTest {
         mockMvc.perform(get("/api/products/{id}", productId))
             .andExpect(status().isNotFound())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.message").value(containsString(productId.toString())));
+            .andExpect(jsonPath("$.errorMessage").value(containsString(productId.toString())));
             
             verify(productService).findById(productId);
 
@@ -118,7 +123,8 @@ public class ProductControllerTest {
 
         mockMvc.perform(post("/api/products")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(productCreateRequestDTO)))
+            .content(objectMapper.writeValueAsString(productCreateRequestDTO))
+            .with(csrf()))
             .andExpect(status().isCreated())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(productId.toString()))
@@ -139,7 +145,8 @@ public class ProductControllerTest {
 
         mockMvc.perform(post("/api/products")
             .content(objectMapper.writeValueAsString(productCreateRequestDTO))
-            .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
             .andExpect(status().isBadRequest())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.statusCode").value(400));
@@ -148,12 +155,74 @@ public class ProductControllerTest {
 
     }
 
-    void deleteProduct_shouldReturn200_whenDeleteSucceeds(){
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void deleteProduct_shouldReturn200_whenDeleteSucceeds() throws Exception{
         
+        UUID productId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/products/{id}", productId)
+            .with(csrf()))
+            .andExpect(status().isOk());
+
+        verify(productService).delete(productId);
+            
     }
     
-    // deleteProduct_shouldReturn404_whenProductDoesNotExist
-    // updateProduct_shouldReturn200_whenValidRequest
-    // updateProduct_shouldReturn400_whenInvalidRequest
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void deleteProduct_shouldReturn404_whenProductDoesNotExist() throws Exception{
 
+        UUID productId = UUID.randomUUID();
+
+        doThrow(new ProductNotFoundException("Product not found with id: " + productId)).when(productService).delete(productId);
+
+        mockMvc.perform(delete("/api/products/{id}", productId)
+            .with(csrf()))
+            .andExpect(status().isNotFound())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.statusCode").value(404))
+            .andExpect(jsonPath("$.errorMessage").value(containsString(productId.toString())));
+
+        verify(productService).delete(productId);
+
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateProduct_shouldReturn200_whenValidRequest() throws Exception{
+        
+        UUID productId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+
+        ProductUpdateRequestDTO productUpdateRequestDTO = new ProductUpdateRequestDTO();
+        productUpdateRequestDTO.setCategoryId(categoryId);
+        productUpdateRequestDTO.setName("Chanel");
+        productUpdateRequestDTO.setPrice(new BigDecimal("339.00"));
+        productUpdateRequestDTO.setStock(100);
+        productUpdateRequestDTO.setDescription("100ml");
+
+        Product product = new Product();
+        product.setId(productId);
+
+        when(productService.update(eq(productId), any(ProductUpdateRequestDTO.class))).thenReturn(Optional.of(product));
+
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO();
+        productResponseDTO.setId(productId);
+        
+        when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
+
+        mockMvc.perform(put("/api/products/{id}", productId)
+            .content(objectMapper.writeValueAsString(productUpdateRequestDTO))
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.id").value(productId.toString()));
+
+        verify(productService).update(eq(productId), any(ProductUpdateRequestDTO.class));
+        verify(productMapper).toResponseDTO(product);
+
+    }
+    
 }
