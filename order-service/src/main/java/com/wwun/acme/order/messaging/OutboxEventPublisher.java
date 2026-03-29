@@ -10,7 +10,6 @@ import com.wwun.acme.order.entity.OutboxEvent;
 import com.wwun.acme.order.enums.OutboxEventType;
 import com.wwun.acme.order.repository.OutboxEventRepository;
 
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 @Component

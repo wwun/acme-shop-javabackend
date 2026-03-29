@@ -65,7 +65,7 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    @Transactional  //preguntar por propagation y isolation
+    @Transactional
     @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
     public Product save(ProductCreateRequestDTO productCreateRequestDTO) {
         Category category = categoryRepository.findById(productCreateRequestDTO.getCategoryId())
