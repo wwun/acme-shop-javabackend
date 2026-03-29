@@ -1,5 +1,6 @@
 package com.wwun.acme.order.controller;
 
+import java.nio.file.AccessDeniedException;
 import java.util.Date;
 
 import org.springframework.http.HttpStatus;
@@ -52,6 +53,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<HandlerExceptionDTO> handlerOrderDuplicatedDifferentIKeyException(OrderDuplicatedDifferentIKeyException e){
         HandlerExceptionDTO error = new HandlerExceptionDTO("ORDER_DUPLICATED_DIFFERENT_IDENTITY", e.getMessage(), HttpStatus.CONFLICT.value(), new Date());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+    
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<HandlerExceptionDTO> handlerAccessDeniedException(AccessDeniedException e){
+        HandlerExceptionDTO error = new HandlerExceptionDTO("ACCESS_DENIED", e.getMessage(), HttpStatus.FORBIDDEN.value(), new Date());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     public HandlerExceptionDTO setErrorValues(String errorType, String errorMessage, Integer statusCode, Date date){

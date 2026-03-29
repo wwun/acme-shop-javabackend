@@ -12,6 +12,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
 import com.wwun.acme.order.enums.OutboxEventType;
 import com.wwun.acme.order.exception.OrderDuplicatedDifferentIKeyException;
+import com.wwun.acme.order.exception.OrderNotFoundException;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.messaging.OutboxEventPublisher;
 import com.wwun.acme.order.metric.OrderMetrics;
@@ -115,13 +117,13 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    public Optional<Order> findById(UUID id) {
-        Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
+    public Order findById(UUID id) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if(!SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication()) && !order.getUserId().equals(SecurityUtils.getCurrentUserId())){
-            throw new RuntimeException("Not allowed to access this order");
+            throw new AccessDeniedException("Not allowed to access this order");
         }
-        return Optional.of(order);
+        return order;
     }
 
     @Override
