@@ -32,8 +32,8 @@ public class CategoryServiceImpl implements CategoryService{
     }
 
     @Override
-    public Optional<Category> findById(UUID id) {
-        return categoryRepository.findById(id);
+    public Category findById(UUID id) {
+        return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + id));
     }
 
     @Override
@@ -43,11 +43,6 @@ public class CategoryServiceImpl implements CategoryService{
         if(category.getName()==null || category.getName().equals("")){
             throw new InvalidCategoryException("Invalid category data in DTo");
         }
-        return categoryRepository.save(category);
-    }
-
-    @Transactional
-    private Category save(Category category){
         return categoryRepository.save(category);
     }
 
@@ -62,11 +57,7 @@ public class CategoryServiceImpl implements CategoryService{
 
     @Override
     @Transactional
-    public Optional<Category> update(UUID id, CategoryUpdateRequestDTO categoryUpdateRequestDTO) {
-        if(categoryRepository.findById(id).isEmpty()){
-            throw new CategoryNotFoundException("Category not found with id: " + id);
-        }
-
+    public Category update(UUID id, CategoryUpdateRequestDTO categoryUpdateRequestDTO) {
         Category category = categoryMapper.toEntity(categoryUpdateRequestDTO);
 
         if(category.getName()==null || category.getName().isBlank())
@@ -76,7 +67,7 @@ public class CategoryServiceImpl implements CategoryService{
             .map(existingCategory -> {
                 existingCategory.setName(category.getName());
                 return categoryRepository.save(existingCategory);
-            });
+            }).orElseThrow(() -> new CategoryNotFoundException("Category not found: " + id));
     }
 
     

@@ -1,14 +1,12 @@
 package com.wwun.acme.product.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,13 +18,12 @@ import com.wwun.acme.product.dto.ProductUpdateRequestDTO;
 import com.wwun.acme.product.entity.Category;
 import com.wwun.acme.product.entity.Product;
 import com.wwun.acme.product.entity.StockMovement;
-import com.wwun.acme.product.exception.CategoryNotFoundException;
 import com.wwun.acme.product.exception.InsufficientStockException;
 import com.wwun.acme.product.exception.InvalidStockAmountException;
+import com.wwun.acme.product.exception.ProductAlreadyExistsException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.metric.CacheMetrics;
-import com.wwun.acme.product.repository.CategoryRepository;
 import com.wwun.acme.product.repository.ProductRepository;
 import com.wwun.acme.product.repository.StockMovementRepository;
 
@@ -35,21 +32,19 @@ import com.wwun.acme.product.enums.StockOperation;
 @Service
 public class ProductServiceImpl implements ProductService{
 
-    //private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
-
-    // repository which contains use cases for CRUD operations
-
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
     private final StockMovementRepository stockMovementRepository;
     private final ProductMapper productMapper;
     //private final RedisTemplate<String, Object> redisTemplate;
+    private final CacheMetrics cacheMetrics;
     
-    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, StockMovementRepository stockMovementRepository, ProductMapper productMapper, CacheMetrics cacheMetrics) {
+    public ProductServiceImpl(ProductRepository productRepository, CategoryService categoryService, StockMovementRepository stockMovementRepository, ProductMapper productMapper, CacheMetrics cacheMetrics) {
         this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
         this.stockMovementRepository = stockMovementRepository;
         this.productMapper = productMapper;
+        this.cacheMetrics = cacheMetrics;
     }
 
     @Override
@@ -60,18 +55,21 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     @Cacheable(cacheNames = "productById", key = "#id")
-    public Optional<Product> findById(UUID id) {
-        return productRepository.findById(id);
+    public Product findById(UUID id) {
+        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
     }
 
     @Override
     @Transactional
     @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
     public Product save(ProductCreateRequestDTO productCreateRequestDTO) {
-        Category category = categoryRepository.findById(productCreateRequestDTO.getCategoryId())
-                .orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+        Category category = categoryService.findById(productCreateRequestDTO.getCategoryId());
         Product product = productMapper.toEntity(productCreateRequestDTO);
         product.setCategory(category);
+
+        if(productRepository.findByName(product.getName()).isPresent())
+            throw new ProductAlreadyExistsException("Name product already exists: " + product.getName());
+
         return productRepository.save(product);
     }
 
@@ -79,12 +77,17 @@ public class ProductServiceImpl implements ProductService{
     @Transactional
     @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
     public Optional<Product> update(UUID productId, ProductUpdateRequestDTO productUpdateRequestDTO) {
+        productRepository.findByName(productUpdateRequestDTO.getName())
+            .ifPresent(existing -> {
+                if (!existing.getId().equals(productId))
+                    throw new ProductAlreadyExistsException("Product name already exists");
+            });
+
         return productRepository.findById(productId).map(existing -> {
             existing.setName(productUpdateRequestDTO.getName());
             existing.setPrice(productUpdateRequestDTO.getPrice());
             existing.setStock(productUpdateRequestDTO.getStock());
-            existing.setCategory(categoryRepository.findById(productUpdateRequestDTO.getCategoryId())
-                    .orElseThrow(() -> new CategoryNotFoundException("Category not found")));
+            existing.setCategory(categoryService.findById(productUpdateRequestDTO.getCategoryId()));
             return productRepository.save(existing);
         });
     }
@@ -112,9 +115,12 @@ public class ProductServiceImpl implements ProductService{
         product.setStock(amount);
         Product updated = productRepository.save(product);
         
-        stockMovementRepository.save(
-            new StockMovement(LocalDateTime.now(), amount, StockOperation.SET, updated)
-        );
+        stockMovementRepository.save(StockMovement.builder()
+            .timestamp(Instant.now())
+            .quantity(amount)
+            .operation(StockOperation.SET)
+            .product(updated)
+            .build());
 
         return Optional.of(updated);
     }
@@ -133,8 +139,12 @@ public class ProductServiceImpl implements ProductService{
         product.setStock(product.getStock() == null ? amount : product.getStock() + amount);
         Product updated = productRepository.save(product);
 
-        stockMovementRepository.save(
-            new StockMovement(LocalDateTime.now(), amount, StockOperation.INCREASE, updated)
+        stockMovementRepository.save(StockMovement.builder()
+            .timestamp(Instant.now())
+            .quantity(amount)
+            .operation(StockOperation.INCREASE)
+            .product(updated)
+            .build()
         );
 
         return Optional.of(updated);
@@ -157,8 +167,12 @@ public class ProductServiceImpl implements ProductService{
         product.setStock(product.getStock() - amount);
         Product updated = productRepository.save(product);
 
-        stockMovementRepository.save(
-            new StockMovement(LocalDateTime.now(), amount, StockOperation.DECREASE, updated)
+        stockMovementRepository.save(StockMovement.builder()
+            .timestamp(Instant.now())
+            .quantity(amount)
+            .operation(StockOperation.DECREASE)
+            .product(updated)
+            .build()
         );
 
         return Optional.of(updated);
@@ -171,26 +185,10 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public List<ProductResponseDTO> getAllById(List<UUID> productsId){
-        return productRepository.findAllById(productsId).stream()
-        .map(productMapper::toResponseDTO)
-        .collect(Collectors.toList());
+        List<Product> found = productRepository.findAllById(productsId);
+        if (found.size() != productsId.size())
+            throw new ProductNotFoundException("One or more products not found");
+        return found.stream().map(productMapper::toResponseDTO).toList();
     }
 
-    private boolean isValidProduct(Product product){
-
-        boolean isValid = true;
-
-        if(product.getName()==null || product.getName().isBlank())
-            isValid = false;
-
-        if(product.getPrice() != null && product.getPrice().signum() < 0){
-            isValid = false;
-        }
-
-        if(product.getStock()!= null && product.getStock() < 0){
-            isValid = false;
-        }
-
-        return isValid;
-    }
 }

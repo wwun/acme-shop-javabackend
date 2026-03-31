@@ -11,7 +11,7 @@ import com.wwun.acme.product.entity.Category;
 public interface CategoryService {
     List<Category> findAll();
     Category save(CategoryCreateRequestDTO categoryCreateRequestDTO);
-    Optional<Category> findById(UUID id);
+    Category findById(UUID id);
     void delete(UUID id);
-    Optional<Category> update(UUID id, CategoryUpdateRequestDTO categoryUpdateRequestDTO);
+    Category update(UUID id, CategoryUpdateRequestDTO categoryUpdateRequestDTO);
 }

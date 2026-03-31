@@ -12,7 +12,7 @@ import com.wwun.acme.product.entity.Product;
 
 public interface ProductService {
     List<Product> findAll();
-    Optional<Product> findById(UUID id);
+    Product findById(UUID id);
     Product save(ProductCreateRequestDTO productCreateRequestDTO);
     //Product save(Product product);
     Optional<Product> update(UUID id, ProductUpdateRequestDTO productUpdateRequestDTO);
