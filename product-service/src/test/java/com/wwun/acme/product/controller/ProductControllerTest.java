@@ -29,6 +29,7 @@ import com.wwun.acme.product.dto.ProductCreateRequestDTO;
 import com.wwun.acme.product.dto.ProductResponseDTO;
 import com.wwun.acme.product.dto.ProductUpdateRequestDTO;
 import com.wwun.acme.product.entity.Product;
+import com.wwun.acme.product.exception.ProductAlreadyExistsException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.service.ProductService;
@@ -61,11 +62,10 @@ public class ProductControllerTest {
         Product product = new Product();
         product.setId(productId);
 
-        when(productService.findById(productId)).thenReturn(Optional.of(product));
+        when(productService.findById(productId)).thenReturn(product);
 
-        ProductResponseDTO productResponseDTO = new ProductResponseDTO();
-        productResponseDTO.setId(productId);
-
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), 20, null);
+        
         when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
         
         mockMvc.perform(get("/api/products/{id}", productId))
@@ -114,11 +114,8 @@ public class ProductControllerTest {
         product.setId(productId);
         when(productService.save(any(ProductCreateRequestDTO.class))).thenReturn(product);
 
-        ProductResponseDTO productResponseDTO = new ProductResponseDTO();
-        productResponseDTO.setId(productId);
-        productResponseDTO.setPrice(new BigDecimal("10.00"));
-        productResponseDTO.setStock(20);
-
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), 20, null);
+        
         when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
 
         mockMvc.perform(post("/api/products")
@@ -152,6 +149,51 @@ public class ProductControllerTest {
             .andExpect(jsonPath("$.statusCode").value(400));
 
         verify(productService, never()).save(any(ProductCreateRequestDTO.class));
+
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createProduct_shouldReturn409_whenProductNameAlreadyExists() throws Exception {
+        // Given
+        UUID categoryId = UUID.randomUUID();
+ 
+        ProductCreateRequestDTO request = new ProductCreateRequestDTO();
+        request.setCategoryId(categoryId);
+        request.setPrice(new BigDecimal("10.00"));
+        request.setName("vacuum");
+        request.setStock(5);
+ 
+        when(productService.save(any(ProductCreateRequestDTO.class)))
+                .thenThrow(new ProductAlreadyExistsException("Product name already exists: vacuum"));
+    
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateProduct_shouldReturn404_whenProductDoesNotExist() throws Exception {
+        // Given
+        UUID productId = UUID.randomUUID();
+        UUID categoryId = UUID.randomUUID();
+ 
+        ProductUpdateRequestDTO request = new ProductUpdateRequestDTO();
+        request.setCategoryId(categoryId);
+        request.setName("Ghost");
+        request.setPrice(new BigDecimal("50.00"));
+        request.setStock(10);
+ 
+        when(productService.update(eq(productId), any(ProductUpdateRequestDTO.class)))
+                .thenThrow(new ProductNotFoundException("Product not found: " + productId));
+ 
+        // When / Then
+        mockMvc.perform(put("/api/products/{id}", productId)
+                .content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorMessage").value(containsString(productId.toString())));
+ 
+        verify(productService).update(eq(productId), any(ProductUpdateRequestDTO.class));
 
     }
 
@@ -207,8 +249,7 @@ public class ProductControllerTest {
 
         when(productService.update(eq(productId), any(ProductUpdateRequestDTO.class))).thenReturn(Optional.of(product));
 
-        ProductResponseDTO productResponseDTO = new ProductResponseDTO();
-        productResponseDTO.setId(productId);
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), 20, null);
         
         when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
 

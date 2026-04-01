@@ -1,6 +1,6 @@
 package com.wwun.acme.product.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.wwun.acme.product.enums.StockOperation;
@@ -15,15 +15,25 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class StockMovement {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private LocalDateTime date;
+    private Instant timestamp;
 
     @NotNull
     @PositiveOrZero
@@ -36,54 +46,54 @@ public class StockMovement {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    public StockMovement() {
-    }
+    // public StockMovement() {
+    // }
 
-    public StockMovement(LocalDateTime date, @PositiveOrZero Integer quantity, StockOperation operation, Product product) {
-        this.date = date;
-        this.quantity = quantity;
-        this.operation = operation;
-        this.product = product;
-    }
+    // public StockMovement(LocalDateTime date, @PositiveOrZero Integer quantity, StockOperation operation, Product product) {
+    //     this.date = date;
+    //     this.quantity = quantity;
+    //     this.operation = operation;
+    //     this.product = product;
+    // }
 
-    public UUID getId() {
-        return id;
-    }
+    // public UUID getId() {
+    //     return id;
+    // }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    // public void setId(UUID id) {
+    //     this.id = id;
+    // }
 
-    public LocalDateTime getDate() {
-        return date;
-    }
+    // public LocalDateTime getDate() {
+    //     return date;
+    // }
 
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
+    // public void setDate(LocalDateTime date) {
+    //     this.date = date;
+    // }
 
-    public Integer getQuantity() {
-        return quantity;
-    }
+    // public Integer getQuantity() {
+    //     return quantity;
+    // }
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
+    // public void setQuantity(Integer quantity) {
+    //     this.quantity = quantity;
+    // }
 
-    public StockOperation getOperation() {
-        return operation;
-    }
+    // public StockOperation getOperation() {
+    //     return operation;
+    // }
 
-    public void setOperation(StockOperation operation) {
-        this.operation = operation;
-    }
+    // public void setOperation(StockOperation operation) {
+    //     this.operation = operation;
+    // }
 
-    public Product getProduct() {
-        return product;
-    }
+    // public Product getProduct() {
+    //     return product;
+    // }
 
-    public void setProduct(Product product) {
-        this.product = product;
-    }
+    // public void setProduct(Product product) {
+    //     this.product = product;
+    // }
 
 }

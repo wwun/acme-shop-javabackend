@@ -1,18 +1,19 @@
 package com.wwun.acme.product.dto;
 
+import java.time.Instant;
 import java.util.Date;
 
 public class HandlerExceptionDTO {
     String errorType;
     String errorMessage;
     Integer statusCode;
-    Date date;
+    Instant timestamp;
     
-    public HandlerExceptionDTO(String errorType, String errorMessage, Integer statusCode, Date date) {
+    public HandlerExceptionDTO(String errorType, String errorMessage, Integer statusCode, Instant timestamp) {
         this.errorType = errorType;
         this.errorMessage = errorMessage;
         this.statusCode = statusCode;
-        this.date = date;
+        this.timestamp = timestamp;
     }
     
     public String getErrorType() {
@@ -33,11 +34,11 @@ public class HandlerExceptionDTO {
     public void setStatusCode(Integer statusCode) {
         this.statusCode = statusCode;
     }
-    public Date getDate() {
-        return date;
+    public Instant getTimestamp() {
+        return timestamp;
     }
-    public void setDate(Date date) {
-        this.date = date;
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
     }
 
 }

@@ -10,8 +10,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Category {
 
     @Id
@@ -25,37 +35,37 @@ public class Category {
     @OneToMany(mappedBy = "category")
     private List<Product> products;
 
-    public Category() {
-    }
+    // public Category() {
+    // }
 
-    public Category(UUID id, String name, List<Product> products) {
-        this.id = id;
-        this.name = name;
-        this.products = products;
-    }
+    // public Category(UUID id, String name, List<Product> products) {
+    //     this.id = id;
+    //     this.name = name;
+    //     this.products = products;
+    // }
 
-    public UUID getId() {
-        return id;
-    }
+    // public UUID getId() {
+    //     return id;
+    // }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    // public void setId(UUID id) {
+    //     this.id = id;
+    // }
 
-    public String getName() {
-        return name;
-    }
+    // public String getName() {
+    //     return name;
+    // }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    // public void setName(String name) {
+    //     this.name = name;
+    // }
 
-    public List<Product> getProducts() {
-        return products;
-    }
+    // public List<Product> getProducts() {
+    //     return products;
+    // }
 
-    public void setProducts(List<Product> products) {
-        this.products = products;
-    }
+    // public void setProducts(List<Product> products) {
+    //     this.products = products;
+    // }
     
 }

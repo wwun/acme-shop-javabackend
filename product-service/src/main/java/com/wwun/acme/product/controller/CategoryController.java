@@ -1,7 +1,6 @@
 package com.wwun.acme.product.controller;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -47,9 +46,8 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable UUID id, @Valid @RequestBody CategoryUpdateRequestDTO categoryUpdateRequestDTO){
-        Optional<Category> category = categoryService.update(id, categoryUpdateRequestDTO);
-        return 
-        ResponseEntity.status(HttpStatus.OK).body(categoryMapper.toResponseDTO(category.get()));
+        Category category = categoryService.update(id, categoryUpdateRequestDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(categoryMapper.toResponseDTO(category));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -62,7 +60,7 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
     public CategoryResponseDTO getCategoryById(@PathVariable UUID id){
-        Category category = categoryService.findById(id).get();
+        Category category = categoryService.findById(id);
         return categoryMapper.toResponseDTO(category);
     }
 

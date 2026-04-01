@@ -11,7 +11,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,10 +32,10 @@ import com.wwun.acme.product.enums.StockOperation;
 import com.wwun.acme.product.exception.CategoryNotFoundException;
 import com.wwun.acme.product.exception.InsufficientStockException;
 import com.wwun.acme.product.exception.InvalidStockAmountException;
+import com.wwun.acme.product.exception.ProductAlreadyExistsException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.metric.CacheMetrics;
-import com.wwun.acme.product.repository.CategoryRepository;
 import com.wwun.acme.product.repository.ProductRepository;
 import com.wwun.acme.product.repository.StockMovementRepository;
 
@@ -44,7 +43,7 @@ import com.wwun.acme.product.repository.StockMovementRepository;
 public class ProductServiceImplTest 
 {
 	@Mock ProductRepository productRepository;
-	@Mock CategoryRepository categoryRepository;
+	@Mock CategoryService categoryService;
 	@Mock ProductMapper productMapper;
 	@Mock StockMovementRepository stockMovementRepository;
 	@Mock CacheMetrics cacheMetrics;
@@ -87,15 +86,32 @@ public class ProductServiceImplTest
 		when(productRepository.findById(productId)).thenReturn(Optional.of(product));
 
 		//When
-		Optional<Product> result = productServiceImpl.findById(productId);
+		Product result = productServiceImpl.findById(productId);
 
 		//Then
-		assertTrue(result.isPresent());
-		assertSame(product, result.get());
-		assertEquals("cellphone", result.get().getName());
+		assertTrue(result!=null);
+		assertSame(product, result);
+		assertEquals("cellphone", result.getName());
 
 		verify(productRepository).findById(productId);
 		
+	}
+
+	@Test
+    void findById_shouldThrow_whenProductDoesNotExist() {
+
+        // Given
+        UUID productId = UUID.randomUUID();
+        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+ 
+        // When
+        ProductNotFoundException ex = assertThrows(ProductNotFoundException.class,
+                () -> productServiceImpl.findById(productId));
+ 
+        // Then
+        assertTrue(ex.getMessage().contains(productId.toString()));
+        verify(productRepository).findById(productId);
+	
 	}
 
 	@Test
@@ -111,7 +127,7 @@ public class ProductServiceImplTest
 
 		when(productCreateRequestDTO.getCategoryId()).thenReturn(categoryId);
 
-		when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+		when(categoryService.findById(categoryId)).thenReturn(category);
 
 		UUID productId = UUID.randomUUID();
 		Product product = new Product();
@@ -121,7 +137,7 @@ public class ProductServiceImplTest
 		product.setStock(2);
 		
 		when(productMapper.toEntity(productCreateRequestDTO)).thenReturn(product);
-
+		when(productRepository.findByName(product.getName())).thenReturn(Optional.empty());
 		when(productRepository.save(product)).thenReturn(product);
 
 		//When
@@ -132,8 +148,9 @@ public class ProductServiceImplTest
 		assertEquals("vacuum", result.getName());
 		assertEquals(categoryId, result.getCategory().getId());
 
-		verify(categoryRepository).findById(categoryId);
+		verify(categoryService).findById(categoryId);
 		verify(productMapper).toEntity(productCreateRequestDTO);
+		verify(productRepository).findByName(product.getName());
 		verify(productRepository).save(product);
 
 	}
@@ -148,7 +165,7 @@ public class ProductServiceImplTest
 
 		when(productCreateRequestDTO.getCategoryId()).thenReturn(categoryId);
 
-		when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+		when(categoryService.findById(categoryId)).thenThrow(new CategoryNotFoundException("Category not found"));
 
 		//When
 		CategoryNotFoundException ex = assertThrows(CategoryNotFoundException.class, () -> productServiceImpl.save(productCreateRequestDTO));
@@ -156,8 +173,42 @@ public class ProductServiceImplTest
 		//Then
 		assertEquals("Category not found", ex.getMessage());
 
-    	verify(categoryRepository).findById(categoryId);
+    	verify(categoryService).findById(categoryId);
+		verify(productRepository, never()).save(any(Product.class));
 
+	}
+
+	@Test
+    void save_shouldThrow_whenProductNameAlreadyExists() {
+		
+        // Given
+        ProductCreateRequestDTO productCreateRequestDTO = mock(ProductCreateRequestDTO.class);
+ 
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category();
+        category.setId(categoryId);
+ 
+        when(productCreateRequestDTO.getCategoryId()).thenReturn(categoryId);
+        when(categoryService.findById(categoryId)).thenReturn(category);
+ 
+        Product existing = new Product();
+        existing.setName("vacuum");
+ 
+        Product mapped = new Product();
+        mapped.setName("vacuum");
+ 
+        when(productMapper.toEntity(productCreateRequestDTO)).thenReturn(mapped);
+        when(productRepository.findByName("vacuum")).thenReturn(Optional.of(existing));
+ 
+        // When
+        ProductAlreadyExistsException ex = assertThrows(ProductAlreadyExistsException.class,
+                () -> productServiceImpl.save(productCreateRequestDTO));
+ 
+        // Then
+        assertTrue(ex.getMessage().contains("vacuum"));
+        verify(productRepository).findByName("vacuum");
+        verify(productRepository, never()).save(any(Product.class));
+	
 	}
 
 	@Test
@@ -351,4 +402,51 @@ public class ProductServiceImplTest
 		assertEquals(StockOperation.SET, savedMovement.getOperation());
 		assertSame(product, savedMovement.getProduct());
 	}
+
+	@Test
+    void getAllById_shouldThrow_whenSomeProductsNotFound() {
+        // Given
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        List<UUID> ids = List.of(id1, id2);
+ 
+        Product product = new Product();
+        product.setId(id1);
+ 
+        when(productRepository.findAllById(ids)).thenReturn(List.of(product));
+ 
+        // When
+        ProductNotFoundException ex = assertThrows(ProductNotFoundException.class,
+                () -> productServiceImpl.getAllById(ids));
+ 
+        // Then
+        assertTrue(ex.getMessage().toLowerCase().contains("one or more products not found"));
+        verify(productRepository).findAllById(ids);
+    }
+ 
+    @Test
+    void getAllById_shouldReturnAll_whenAllProductsExist() {
+        // Given
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        List<UUID> ids = List.of(id1, id2);
+ 
+        Product p1 = new Product();
+        p1.setId(id1);
+        Product p2 = new Product();
+        p2.setId(id2);
+ 
+        when(productRepository.findAllById(ids)).thenReturn(List.of(p1, p2));
+        when(productMapper.toResponseDTO(any(Product.class)))
+                .thenAnswer(inv -> new com.wwun.acme.product.dto.ProductResponseDTO());
+ 
+        // When
+        List<com.wwun.acme.product.dto.ProductResponseDTO> result = productServiceImpl.getAllById(ids);
+ 
+        // Then
+        assertEquals(2, result.size());
+        verify(productRepository).findAllById(ids);
+	
+	}
+	
 }

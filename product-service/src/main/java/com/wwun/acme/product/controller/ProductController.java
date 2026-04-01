@@ -52,9 +52,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
     public ProductResponseDTO getProductById(@PathVariable UUID id){
-        return productService.findById(id)
-            .map(product -> productMapper.toResponseDTO(product))
-            .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " +id));
+        return productMapper.toResponseDTO(productService.findById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -77,7 +75,6 @@ public class ProductController {
         productService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-//B4$3d3d4t0$
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/{stock}/{operation}")

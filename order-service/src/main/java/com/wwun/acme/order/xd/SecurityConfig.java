@@ -1,41 +1,33 @@
-package com.wwun.acme.user.security;
+package com.wwun.acme.order.security;
 
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
 
 import com.wwun.acme.security.JwtService;
 
-@Configuration
+@Component
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Bean
-    PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
     SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception{
-        return http.authorizeHttpRequests((authz) -> authz
-                .requestMatchers("/api/registration/**").permitAll()
-                .requestMatchers("/internal/**").permitAll()
+        return http
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/orders/health").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated())
-            .csrf(config -> config.disable())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .csrf(csrf -> csrf.disable())
             .build();
     }
-
+    
     @Bean
     public JwtAuthFilter jwtAuthFilter(JwtService jwtService) {
         return new JwtAuthFilter(jwtService);
     }
-
 }

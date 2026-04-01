@@ -7,7 +7,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductUpdateRequestDTO {  //what the client sends to update an existing product
                                         // It does not include an ID as the ID is not changed.
                                         //to know which product to update, the client must send the ID in the URL.
@@ -28,35 +36,4 @@ public class ProductUpdateRequestDTO {  //what the client sends to update an exi
     @NotNull
     private UUID categoryId;
 
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String getDescription() {
-        return description;
-    }
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    public BigDecimal getPrice() {
-        return price;
-    }
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-    public Integer getStock() {
-        return stock;
-    }
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-    public UUID getCategoryId() {
-        return categoryId;
-    }
-    public void setCategoryId(UUID categoryId) {
-        this.categoryId = categoryId;
-    }    
-    
 }
