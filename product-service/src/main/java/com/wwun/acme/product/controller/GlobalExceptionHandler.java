@@ -74,6 +74,12 @@ public class GlobalExceptionHandler {
         HandlerExceptionDTO error = setErrorValues("ALREADY_EXISTS",e.getMessage(), HttpStatus.CONFLICT.value(), Instant.now());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<HandlerExceptionDTO> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        HandlerExceptionDTO error = new HandlerExceptionDTO("VALIDATION_ERROR", "Request validation failed", HttpStatus.BAD_REQUEST.value(), Instant.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 
     //InvalidCategoryException
 
