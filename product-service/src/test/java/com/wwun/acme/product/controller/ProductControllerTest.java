@@ -165,7 +165,16 @@ public class ProductControllerTest {
         request.setStock(5);
  
         when(productService.save(any(ProductCreateRequestDTO.class)))
-                .thenThrow(new ProductAlreadyExistsException("Product name already exists: vacuum"));
+                .thenThrow(new ProductAlreadyExistsException("Name product already exists: vacuum"));
+
+        mockMvc.perform(post("/api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+                .with(csrf()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorMessage").value(containsString("vacuum")));
+ 
+        verify(productService).save(any(ProductCreateRequestDTO.class));
     
     }
 

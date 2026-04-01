@@ -1,6 +1,7 @@
 package com.wwun.acme.order.service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public class OrderServiceImpl implements OrderService{
 
         order.setUserId(userId);
         order.setIdempotencyKey(idempotencyKey);
-        order.setOrderDate(LocalDateTime.now());
+        order.setOrderDate(Instant.now());
 
         List<UUID> productsId = orderCreateRequestDTO.getItems().stream().map(OrderItemCreateRequestDTO::getProductId).toList();
 
@@ -74,7 +75,7 @@ public class OrderServiceImpl implements OrderService{
             ProductResponseDTO product = products.stream()
                 .filter(p -> p.getId().equals(itemDto.getProductId()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Producto not found"));
+                .orElseThrow(() -> new RuntimeException("Product not found"));
 
             OrderItem item = new OrderItem();
             item.setOrder(order);
@@ -132,7 +133,7 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public List<Order> findAllByUserId(UUID userId){
         if (!userId.equals(SecurityUtils.getCurrentUserId()) && !SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication())) {
-            throw new RuntimeException("Not allowed to access other users' orders");
+            throw new AccessDeniedException("Not allowed to access other users' orders");
         }
         return orderRepository.findAllByUserId(userId);
     }
@@ -146,10 +147,10 @@ public class OrderServiceImpl implements OrderService{
     @Override
     @Transactional
     public void delete(UUID id) {
-        Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if(!SecurityUtils.isAdmin(SecurityContextHolder.getContext().getAuthentication()) && !order.getUserId().equals(SecurityUtils.getCurrentUserId())){
-            throw new RuntimeException("Not allowed to access this order");
+            throw new AccessDeniedException("Not allowed to access this order");
         }
         orderRepository.deleteById(id);
     }
@@ -158,7 +159,7 @@ public class OrderServiceImpl implements OrderService{
 
         List<OrderItemEvent> itemEvents = order.getItems().stream().map(item -> new OrderItemEvent(item.getProductId(), item.getQuantity(), item.getPriceAtPurchase())).toList();
 
-        return new OrderCreatedEvent( order.getId(), order.getUserId(), order.getTotal(), order.getOrderDate().toInstant(ZoneOffset.UTC), itemEvents);
+        return new OrderCreatedEvent( order.getId(), order.getUserId(), order.getTotal(), order.getOrderDate(), itemEvents);
     }
 
 }

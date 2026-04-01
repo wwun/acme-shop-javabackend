@@ -36,7 +36,6 @@ public class OrderItemServiceImpl implements OrderItemService{
         this.orderItemRepository = orderItemRepository;
         this.orderItemMapper = orderItemMapper;
         this.productGatewayService = productGatewayService;
-        //this.productClient = productClient;
     }
 
     @Override
@@ -82,18 +81,22 @@ public class OrderItemServiceImpl implements OrderItemService{
                 .collect(Collectors.toList());
 
         List<ProductResponseDTO> products = productGatewayService.getAllById(productIds);
-        //List<ProductResponseDTO> products = productClient.getAllById(productIds);
-
+        
         Map<UUID, ProductResponseDTO> productsMaps = products.stream()
                 .collect(Collectors.toMap(ProductResponseDTO::getId, Function.identity()));
 
         return orderItems.stream()
                 .map(orderItem -> {
-                    OrderItemResponseDTO orderItemResponseDTO = orderItemMapper.toResponseDTO(orderItem);
-                    orderItemResponseDTO.setProductName(productsMaps.get(orderItem.getProductId()).getName());
-                    return orderItemResponseDTO;
-                })
-                .collect(Collectors.toList());
+                    String productName = productsMaps.get(orderItem.getProductId()).getName();
+
+                    return new OrderItemResponseDTO(
+                        orderItem.getId(),
+                        orderItem.getOrder().getId(),
+                        orderItem.getProductId(),
+                        productName,
+                        orderItem.getQuantity(),
+                        orderItem.getPriceAtPurchase());
+                }).toList();
 
     }
 
@@ -106,18 +109,13 @@ public class OrderItemServiceImpl implements OrderItemService{
 
         OrderItem existing = orderItemRepository.findById(id).orElseThrow(() -> new RuntimeException("OrderItem not found with id: " + id));
         
-        //debo validar los datos qe se reciben de orderItemUpdateRequestDTO? considerando qe ya se hace validaciones en el mismo deto como con @NotNull @PositiveOrZero y otros
-        //seria mejor usar un .map? aunque para esto tendria qe usan nuevamente un findById qe creo qe seria un golpe innecesario a la bd
         OrderItem orderItemUpdated = orderItemMapper.toEntity(orderItemUpdateRequestDTO);
         
         existing.setQuantity(orderItemUpdated.getQuantity());
 
         existing.setProductId(orderItemUpdated.getProductId());
         
-        //creo qe orderId no va a ser actualizada, no creo qe tenga mucho sentido pasar un item a otro order, la idea seria qe se cree un orderItem nuevo en el respectivo order
-        
-        //este valor vuelve a hacer la busqueda del precio del producto
-        existing.setPriceAtPurchase(BigDecimal.valueOf(100));  //wwun feign obtener desde microservicio product productCliente.getProductPrice(orderItemCreateRequestDTO.getProductId()) donde se hace la validacion si el product existe?
+        existing.setPriceAtPurchase(productGatewayService.getProductPrice(existing.getProductId()));
         
         return Optional.of(orderItemRepository.save(existing));
 

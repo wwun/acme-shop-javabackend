@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -33,7 +34,9 @@ import com.wwun.acme.order.dto.order.order.OrderCreateRequestDTO;
 import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
+import com.wwun.acme.order.exception.OrderNotFoundException;
 import com.wwun.acme.order.mapper.OrderMapper;
+import com.wwun.acme.order.messaging.OutboxEventPublisher;
 import com.wwun.acme.order.metric.OrderMetrics;
 import com.wwun.acme.order.repository.OrderItemRepository;
 import com.wwun.acme.order.repository.OrderRepository;
@@ -47,6 +50,7 @@ public class OrderServiceImplTest {
     @Mock OrderMapper orderMapper;
     @Mock ProductGatewayService productGatewayService;
     @Mock OrderMetrics orderMetrics;
+    @Mock OutboxEventPublisher outboxEventPublisher;
 
     @InjectMocks OrderServiceImpl orderServiceImpl;
 
@@ -120,6 +124,7 @@ public class OrderServiceImplTest {
         assertTrue(saved.getItems().stream().allMatch(item -> item.getOrder() == saved));
 
         verify(orderRepository, times(1)).save(any(Order.class));
+        verify(outboxEventPublisher, times(1)).publish(any(), any(), any());
         verify(orderMetrics, times(1)).incrementOrdersCreated();
     }
 
@@ -170,9 +175,10 @@ public class OrderServiceImplTest {
                 () -> orderServiceImpl.save(idempotencyKey, orderCreateRequestDTO));
 
         // Then
-        assertTrue(ex.getMessage().toLowerCase().contains("producto no encontrado"));
+        assertTrue(ex.getMessage().toLowerCase().contains("product not found"));
 
         verify(orderRepository, never()).save(any());
+        verify(outboxEventPublisher, never()).publish(any(), any(), any());
         verify(orderMetrics, never()).incrementOrdersCreated();
     }
 
@@ -291,7 +297,7 @@ public class OrderServiceImplTest {
         when(auth.getPrincipal()).thenReturn(principal);
 
         //When
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> orderServiceImpl.findById(orderId));
+        AccessDeniedException ex = assertThrows(AccessDeniedException.class, () -> orderServiceImpl.findById(orderId));
 
         //Then
         assertTrue(ex.getMessage().toLowerCase().contains("not allowed to access this order"));
@@ -336,6 +342,21 @@ public class OrderServiceImplTest {
         assertEquals(userId, orderFound.getUserId());
         assertEquals(total, orderFound.getTotal());
 
+        verify(orderRepository).findById(orderId);
+
+    }
+
+    @Test
+    void findById_shouldThrow_whenOrderDoesNotExist() {
+        // Given
+        UUID orderId = UUID.randomUUID();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+ 
+        // When
+        OrderNotFoundException ex = assertThrows(OrderNotFoundException.class, () -> orderServiceImpl.findById(orderId));
+ 
+        // Then
+        assertTrue(ex.getMessage().toLowerCase().contains("order not found"));
         verify(orderRepository).findById(orderId);
 
     }
@@ -427,12 +448,28 @@ public class OrderServiceImplTest {
         when(auth.getPrincipal()).thenReturn(principal);
 
         // When
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        AccessDeniedException ex = assertThrows(AccessDeniedException.class,
                 () -> orderServiceImpl.delete(orderId));
 
         // Then
         assertTrue(ex.getMessage().toLowerCase().contains("not allowed to access this order"));
 
+        verify(orderRepository).findById(orderId);
+        verify(orderRepository, never()).deleteById(any());
+
+    }
+
+    @Test
+    void delete_shouldThrow_whenOrderDoesNotExist() {
+        // Given
+        UUID orderId = UUID.randomUUID();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+ 
+        // When
+        OrderNotFoundException ex = assertThrows(OrderNotFoundException.class, () -> orderServiceImpl.delete(orderId));
+ 
+        // Then
+        assertTrue(ex.getMessage().toLowerCase().contains("order not found"));
         verify(orderRepository).findById(orderId);
         verify(orderRepository, never()).deleteById(any());
 

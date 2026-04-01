@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.wwun.acme.product.dto.ProductCreateRequestDTO;
+import com.wwun.acme.product.dto.ProductResponseDTO;
 import com.wwun.acme.product.entity.Category;
 import com.wwun.acme.product.entity.Product;
 import com.wwun.acme.product.entity.StockMovement;
@@ -438,10 +439,20 @@ public class ProductServiceImplTest
  
         when(productRepository.findAllById(ids)).thenReturn(List.of(p1, p2));
         when(productMapper.toResponseDTO(any(Product.class)))
-                .thenAnswer(inv -> new com.wwun.acme.product.dto.ProductResponseDTO());
+                .thenAnswer(inv -> {
+					Product p = inv.getArgument(0);
+					return new ProductResponseDTO(
+						p.getId(),
+						p.getName(),
+						p.getDescription(),
+						p.getPrice(),
+						p.getStock(),
+						null
+					);
+				});
  
         // When
-        List<com.wwun.acme.product.dto.ProductResponseDTO> result = productServiceImpl.getAllById(ids);
+        List<ProductResponseDTO> result = productServiceImpl.getAllById(ids);
  
         // Then
         assertEquals(2, result.size());

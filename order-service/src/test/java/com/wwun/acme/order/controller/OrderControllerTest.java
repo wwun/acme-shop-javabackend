@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +30,8 @@ import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.exception.OrderNotFoundException;
 import com.wwun.acme.order.mapper.OrderMapper;
 import com.wwun.acme.order.service.OrderService;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(OrderController.class)
 @Import(GlobalExceptionHandler.class)
@@ -55,8 +59,7 @@ public class OrderControllerTest {
         Order order = new Order();
         order.setId(orderId);
 
-        OrderResponseDTO dto = new OrderResponseDTO();
-        dto.setId(orderId);
+        OrderResponseDTO dto = new OrderResponseDTO(orderId, UUID.randomUUID(), Instant.now(), new BigDecimal("25.50"), List.of());
 
         when(orderService.findById(orderId)).thenReturn(order);
         when(orderMapper.toResponseDTO(order)).thenReturn(dto);
@@ -89,7 +92,8 @@ public class OrderControllerTest {
 
         UUID orderId = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/orders/{id}", orderId))
+        mockMvc.perform(delete("/api/orders/{id}", orderId)
+            .with(csrf()))
             .andExpect(status().isOk());
 
         verify(orderService).delete(orderId);
@@ -99,10 +103,6 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void createOrder_shouldReturn201_whenValidRequest() throws Exception{
-
-        // ADMIN', 'USER')")
-        // public ResponseEntity<OrderResponseDTO> createOrder(@RequestHeader("Idempotency-Key") UUID idempotencyKey, @Valid @RequestBody OrderCreateRequestDTO orderCreateRequestDTO){
-        //     return ResponseEntity.status(HttpStatus.CREATED).body(orderMapper.toResponseDTO(orderService.save(idempotencyKey, orderCreateRequestDTO
 
         //Given
         UUID orderId = UUID.randomUUID();
@@ -121,14 +121,16 @@ public class OrderControllerTest {
         
         when(orderService.save(eq(idempotencyKey), any(OrderCreateRequestDTO.class))).thenReturn(order);
 
-        OrderResponseDTO orderResponseDTO = new OrderResponseDTO();
-        orderResponseDTO.setId(orderId);
+        OrderResponseDTO orderResponseDTO = new OrderResponseDTO(orderId, UUID.randomUUID(), Instant.now(), new BigDecimal("20.00"), List.of());
 
+        when(orderService.save(eq(idempotencyKey), any(OrderCreateRequestDTO.class))).thenReturn(order);
         when(orderMapper.toResponseDTO(order)).thenReturn(orderResponseDTO);
 
         mockMvc.perform(post("/api/orders")
+            .header("Idempotency-Key", idempotencyKey.toString())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(orderCreateRequestDTO)))
+            .content(objectMapper.writeValueAsString(orderCreateRequestDTO))
+            .with(csrf()))
             .andExpect(status().isCreated())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(orderId.toString()));
@@ -145,14 +147,42 @@ public class OrderControllerTest {
         OrderCreateRequestDTO invalidRequest = new OrderCreateRequestDTO();
         
         mockMvc.perform(post("/api/orders")
+                .header("Idempotency-Key", idempotencyKey.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
+                .content(objectMapper.writeValueAsString(invalidRequest))
+                .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.statusCode").value(400));
 
         verify(orderService, never()).save(eq(idempotencyKey), any(OrderCreateRequestDTO.class));
 
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void getAllOrdersByUser_shouldReturn200_whenUserHasOrders() throws Exception {
+        // Given
+        UUID userId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+ 
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(userId);
+ 
+        OrderResponseDTO dto = new OrderResponseDTO(orderId, userId, Instant.now(), new BigDecimal("50.00"), List.of());
+ 
+        when(orderService.findAllByUserId(userId)).thenReturn(List.of(order));
+        when(orderMapper.toResponseDTO(order)).thenReturn(dto);
+ 
+        // When / Then
+        mockMvc.perform(get("/api/orders/user/{userId}", userId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].id").value(orderId.toString()));
+ 
+        verify(orderService).findAllByUserId(userId);
+    
     }
 
 }

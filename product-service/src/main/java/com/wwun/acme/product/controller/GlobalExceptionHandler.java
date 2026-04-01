@@ -70,9 +70,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ProductAlreadyExistsException.class)
-    public ResponseEntity<HandlerExceptionDTO> handleProductAlreadyExistsException(HttpMessageNotReadableException e){
+    public ResponseEntity<HandlerExceptionDTO> handleProductAlreadyExistsException(ProductAlreadyExistsException e){
         HandlerExceptionDTO error = setErrorValues("ALREADY_EXISTS",e.getMessage(), HttpStatus.CONFLICT.value(), Instant.now());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     //InvalidCategoryException

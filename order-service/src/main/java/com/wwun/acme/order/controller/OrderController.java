@@ -28,8 +28,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private OrderService orderService;
-    private OrderMapper orderMapper;
+    private final OrderService orderService;
+    private final OrderMapper orderMapper;
 
     public OrderController(OrderService orderService, OrderMapper orderMapper){
         this.orderService = orderService;

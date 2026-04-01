@@ -27,18 +27,18 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/orderItems/{orderId}/items")
 public class OrderItemController {
 
-    private OrderItemService orderItemService;
-    private OrderItemMapper orderItemMapper;
+    private final OrderItemService orderItemService;
+    private final OrderItemMapper orderItemMapper;
 
     public OrderItemController(OrderItemService orderItemService, OrderItemMapper orderItemMapper){
         this.orderItemService = orderItemService;
         this.orderItemMapper = orderItemMapper;
     }
 
-    @GetMapping //("/{id}")
+    @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<List<OrderItemResponseDTO>> findAllByOrderId(@PathVariable UUID id){
-        return ResponseEntity.status(HttpStatus.OK).body(orderItemService.findAllByOrderId(id));
+    public ResponseEntity<List<OrderItemResponseDTO>> findAllByOrderId(@PathVariable UUID orderId){
+        return ResponseEntity.status(HttpStatus.OK).body(orderItemService.findAllByOrderId(orderId));
     }
     
     @PostMapping
@@ -56,7 +56,7 @@ public class OrderItemController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> deleteOrderItem(@PathVariable UUID orderId, @PathVariable UUID id){
-        orderItemService.delete(id);
+        orderItemService.delete(orderId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
