@@ -21,6 +21,7 @@ import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
+import com.wwun.acme.order.enums.OrderStatus;
 import com.wwun.acme.order.enums.OutboxEventType;
 import com.wwun.acme.order.exception.OrderDuplicatedDifferentIKeyException;
 import com.wwun.acme.order.exception.OrderNotFoundException;
@@ -102,6 +103,8 @@ public class OrderServiceImpl implements OrderService{
             throw new OrderDuplicatedDifferentIKeyException("Conflict, Idempotency key already used with a different request payload");
         }
         
+        order.setStatus(OrderStatus.PENDING_CONFIRMATION);
+
         Order orderSaved = orderRepository.save(order);
 
         OrderCreatedEvent eventPayload = buildOrderCreatedEvent(orderSaved);

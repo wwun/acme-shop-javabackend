@@ -116,6 +116,7 @@
     <module>user-service</module>
     <module>cart-service</module>
     <module>auth-service</module>
+    <module>inventory-service</module>
   </modules>
   <build>
     <pluginManagement>
