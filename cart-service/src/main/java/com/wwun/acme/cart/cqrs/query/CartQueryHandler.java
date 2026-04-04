@@ -17,7 +17,6 @@ import com.wwun.acme.cart.dto.response.CartItemResponseDTO;
 import com.wwun.acme.cart.dto.response.CartResponseDTO;
 import com.wwun.acme.cart.dto.response.CartSummaryDTO;
 import com.wwun.acme.cart.dto.response.CartSummaryItemDTO;
-import com.wwun.acme.cart.feign.ProductClient;
 import com.wwun.acme.cart.service.ProductGatewayService;
 
 import io.micrometer.core.instrument.MeterRegistry;
