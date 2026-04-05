@@ -1,0 +1,20 @@
+package com.wwun.acme.inventory.event;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
+public record OrderItemEvent(
+    UUID productId,
+    
+    @Positive
+    @Min(1)
+    Integer quantity,
+    
+    @PositiveOrZero
+    BigDecimal priceAtPurchase){
+
+}

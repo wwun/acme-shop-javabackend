@@ -116,10 +116,10 @@ public class ProductServiceImpl implements ProductService{
         Product updated = productRepository.save(product);
         
         stockMovementRepository.save(StockMovement.builder()
-            .timestamp(Instant.now())
+            .createdAt(Instant.now())
             .quantity(amount)
             .operation(StockOperation.SET)
-            .product(updated)
+            //.product(updated)
             .build());
 
         return Optional.of(updated);
@@ -140,10 +140,10 @@ public class ProductServiceImpl implements ProductService{
         Product updated = productRepository.save(product);
 
         stockMovementRepository.save(StockMovement.builder()
-            .timestamp(Instant.now())
+            .createdAt(Instant.now())
             .quantity(amount)
             .operation(StockOperation.INCREASE)
-            .product(updated)
+            //.product(updated)
             .build()
         );
 
@@ -168,10 +168,10 @@ public class ProductServiceImpl implements ProductService{
         Product updated = productRepository.save(product);
 
         stockMovementRepository.save(StockMovement.builder()
-            .timestamp(Instant.now())
+            .createdAt(Instant.now())
             .quantity(amount)
             .operation(StockOperation.DECREASE)
-            .product(updated)
+            //.product(updated)
             .build()
         );
 

@@ -2,8 +2,6 @@ package com.wwun.acme.order.service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -54,7 +52,6 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    @Transactional
     public Order save(UUID idempotencyKey, OrderCreateRequestDTO orderCreateRequestDTO) {
 
         UUID userId = SecurityUtils.getCurrentUserId();
