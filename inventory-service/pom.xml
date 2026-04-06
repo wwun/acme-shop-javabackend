@@ -67,7 +67,7 @@
 		</dependency>
 
 		<!-- MapStruct -->
-		<!-- <dependency>
+		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 		</dependency>
@@ -75,7 +75,7 @@
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct-processor</artifactId>
 			<scope>provided</scope>
-		</dependency> -->
+		</dependency>
 
 		<!-- Lombok -->
 		<dependency>

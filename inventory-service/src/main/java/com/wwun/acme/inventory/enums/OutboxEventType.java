@@ -1,5 +1,6 @@
 package com.wwun.acme.inventory.enums;
 
-public class OutboxEventType {
+public enum OutboxEventType {
+    STOCK_RESERVED, STOCK_FAILED
 
 }

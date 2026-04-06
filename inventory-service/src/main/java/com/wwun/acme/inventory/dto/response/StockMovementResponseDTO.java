@@ -1,5 +1,16 @@
 package com.wwun.acme.inventory.dto.response;
 
-public class StockMovementResponseDTO {
+import java.time.Instant;
+import java.util.UUID;
+
+import com.wwun.acme.inventory.enums.StockOperation;
+
+public record StockMovementResponseDTO(
+    UUID id,
+    UUID productId,
+    UUID orderId,
+    Instant createdAt,
+    Integer quantity,
+    StockOperation operation){
 
 }

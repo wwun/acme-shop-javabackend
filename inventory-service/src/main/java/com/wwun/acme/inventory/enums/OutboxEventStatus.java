@@ -1,5 +1,6 @@
 package com.wwun.acme.inventory.enums;
 
-public class OutboxEventStatus {
+public enum OutboxEventStatus {
+    PENDING, PROCESSED, FAILED
 
 }

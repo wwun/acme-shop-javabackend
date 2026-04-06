@@ -20,6 +20,7 @@ import com.wwun.acme.inventory.exception.ConflictException;
 import com.wwun.acme.inventory.exception.InsufficientStockException;
 import com.wwun.acme.inventory.exception.InvalidStockAmountException;
 import com.wwun.acme.inventory.exception.InventoryNotFoundException;
+import com.wwun.acme.inventory.mapper.InventoryMapper;
 import com.wwun.acme.inventory.repository.InventoryRepository;
 import com.wwun.acme.inventory.repository.StockMovementRepository;
 
@@ -28,12 +29,14 @@ public class InventoryServiceImpl implements InventoryService{
 
     private InventoryRepository inventoryRepository;
     private StockMovementRepository stockMovementRepository;
+    private InventoryMapper inventoryMapper;
 
     private static final Logger log = LoggerFactory.getLogger(InventoryServiceImpl.class);
 
-    public InventoryServiceImpl(InventoryRepository inventoryRepository, StockMovementRepository stockMovementRepository){
+    public InventoryServiceImpl(InventoryRepository inventoryRepository, StockMovementRepository stockMovementRepository, InventoryMapper inventoryMapper){
         this.inventoryRepository = inventoryRepository;
         this.stockMovementRepository = stockMovementRepository;
+        this.inventoryMapper = inventoryMapper;
     }
 
     @Override
