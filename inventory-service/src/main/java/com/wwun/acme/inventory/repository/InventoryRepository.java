@@ -11,5 +11,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID>{
 
     Optional<Inventory> findByProductId(UUID productId);
     void deleteByProductId(UUID productId);
+    Boolean existsByProductId(UUID productId);
 
 }

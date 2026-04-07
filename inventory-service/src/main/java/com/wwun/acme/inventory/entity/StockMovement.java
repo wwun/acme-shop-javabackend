@@ -3,7 +3,7 @@ package com.wwun.acme.inventory.entity;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.wwun.acme.inventory.enums.StockOperation;
+import com.wwun.acme.inventory.enums.StockMovementType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,8 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
@@ -38,8 +37,7 @@ public class StockMovement {
     @Column(nullable = false)
     private UUID productId;
 
-    @NotNull
-    @Column(nullable = false)
+    @Column(nullable = true)
     private UUID orderId;
 
     @NotNull
@@ -52,6 +50,11 @@ public class StockMovement {
     private Integer quantity;
 
     @Enumerated(EnumType.STRING)
-    private StockOperation operation;
+    private StockMovementType type;
+
+    @PrePersist
+    void prePersist(){
+        this.createdAt = Instant.now();
+    }
     
 }

@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
@@ -46,5 +47,10 @@ public class ProcessedEvent {
     @NotNull
     @Column(nullable = false, updatable = false)
     private Instant processedAt;
+
+    @PrePersist
+    void prePersist(){
+        processedAt = Instant.now();
+    }
 
 }

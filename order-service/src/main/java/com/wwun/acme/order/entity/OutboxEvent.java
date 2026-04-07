@@ -51,7 +51,7 @@ public class OutboxEvent {
     @PrePersist
     void prePersist(){
         this.createdAt = Instant.now();
-        this.status = "PENDING";
+        this.status = OutboxEventStatus.PENDING.name();
     }
 
     public void markAsPending(){

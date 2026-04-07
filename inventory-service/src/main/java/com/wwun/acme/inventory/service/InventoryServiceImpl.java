@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.wwun.acme.inventory.entity.Inventory;
 import com.wwun.acme.inventory.entity.StockMovement;
-import com.wwun.acme.inventory.enums.StockOperation;
+import com.wwun.acme.inventory.enums.StockMovementType;
 import com.wwun.acme.inventory.event.OrderCreatedEvent;
 import com.wwun.acme.inventory.event.OrderItemEvent;
 import com.wwun.acme.inventory.exception.ConflictException;
@@ -27,9 +27,9 @@ import com.wwun.acme.inventory.repository.StockMovementRepository;
 @Service
 public class InventoryServiceImpl implements InventoryService{
 
-    private InventoryRepository inventoryRepository;
-    private StockMovementRepository stockMovementRepository;
-    private InventoryMapper inventoryMapper;
+    private final InventoryRepository inventoryRepository;
+    private final StockMovementRepository stockMovementRepository;
+    private final InventoryMapper inventoryMapper;
 
     private static final Logger log = LoggerFactory.getLogger(InventoryServiceImpl.class);
 
@@ -80,7 +80,6 @@ public class InventoryServiceImpl implements InventoryService{
             .productId(productId)
             .quantityAvailable(initialQuantity)
             .quantityReserved(0)
-            .updatedAt(Instant.now())
             .build();
 
         try{
@@ -100,6 +99,10 @@ public class InventoryServiceImpl implements InventoryService{
         if(productId==null){
             log.warn("delete called with productId null");
             throw new IllegalArgumentException("productId cannot be null");
+        }
+
+        if (!inventoryRepository.existsByProductId(productId)) {
+            throw new InventoryNotFoundException("Inventory not found for productId: " + productId);
         }
 
         inventoryRepository.deleteByProductId(productId);
@@ -148,15 +151,45 @@ public class InventoryServiceImpl implements InventoryService{
 
             inventory.setQuantityAvailable(inventory.getQuantityAvailable() - item.quantity());
             inventory.setQuantityReserved(inventory.getQuantityReserved() + item.quantity());
-            inventory.setUpdatedAt(Instant.now());
         }
 
         inventoryRepository.saveAll(inventoriesToUpdate);
+
+        for (int i = 0; i < orderCreatedEvent.items().size(); i++) {
+            OrderItemEvent item = orderCreatedEvent.items().get(i);
+            stockMovementRepository.save(StockMovement.builder()
+                .productId(item.productId())
+                .orderId(orderCreatedEvent.orderId())
+                .quantity(item.quantity())
+                .type(StockMovementType.RESERVED)
+                .build());
+        }
         
     }
 
     @Override
+    @Transactional
     public void releaseStock(UUID orderId){
+        
+        List<StockMovement> reservations = stockMovementRepository.findAllByOrderIdAndType(orderId, StockMovementType.RESERVED);
+
+        for (StockMovement reservation : reservations) {
+            Inventory inventory = inventoryRepository.findByProductId(reservation.getProductId())
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for productId: " + reservation.getProductId()));
+
+            inventory.setQuantityAvailable(inventory.getQuantityAvailable() + reservation.getQuantity());
+            inventory.setQuantityReserved(inventory.getQuantityReserved() - reservation.getQuantity());
+            
+            inventoryRepository.save(inventory);
+
+            stockMovementRepository.save(StockMovement.builder()
+                .productId(reservation.getProductId())
+                .orderId(orderId)
+                .quantity(reservation.getQuantity())
+                .type(StockMovementType.RELEASED)
+                .build());
+        }
+        
     }
 
     @Override
@@ -180,10 +213,9 @@ public class InventoryServiceImpl implements InventoryService{
 
         stockMovementRepository.save(StockMovement.builder()
             .productId(productId)
-            .orderId(UUID.fromString("0"))  //wwun
-            .createdAt(Instant.now())
+            .orderId(null)
             .quantity(quantity)
-            .operation(StockOperation.INCREASE)
+            .type(StockMovementType.RESTOCKED)
             .build()
         );
 
@@ -216,10 +248,9 @@ public class InventoryServiceImpl implements InventoryService{
 
         stockMovementRepository.save(StockMovement.builder()
             .productId(productId)
-            .orderId(UUID.fromString("0"))
-            .createdAt(Instant.now())
+            .orderId(null)
             .quantity(quantity)
-            .operation(StockOperation.DECREASE)
+            .type(StockMovementType.ADJUSTED_DOWN)
             .build()
         );
 

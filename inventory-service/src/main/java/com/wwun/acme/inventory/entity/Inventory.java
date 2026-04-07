@@ -9,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -47,5 +49,11 @@ public class Inventory {
     @NotNull
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    void onUpdate(){
+        this.updatedAt = Instant.now();
+    }
 
 }

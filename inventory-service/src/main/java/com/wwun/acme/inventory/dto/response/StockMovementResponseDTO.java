@@ -3,7 +3,8 @@ package com.wwun.acme.inventory.dto.response;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.wwun.acme.inventory.enums.StockOperation;
+import com.wwun.acme.inventory.enums.StockMovementType;
+
 
 public record StockMovementResponseDTO(
     UUID id,
@@ -11,6 +12,6 @@ public record StockMovementResponseDTO(
     UUID orderId,
     Instant createdAt,
     Integer quantity,
-    StockOperation operation){
+    StockMovementType type){
 
 }
