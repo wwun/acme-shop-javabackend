@@ -157,6 +157,24 @@ services:
       - OAUTH2_REDIRECT_URI=http://localhost:8090/login/oauth2/code/{registrationId}
       # - ACME_JWT_SECRET=${ACME_JWT_SECRET}
       # - EUREKA_DEFAULT_ZONE=${EUREKA_DEFAULT_ZONE}
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: ./inventory-service/Dockerfile
+    container_name: inventory-service
+    ports:
+      - "8092:8001"
+    networks:
+      - acme-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=tru
       
   api-gateway-server:
     build:
@@ -183,6 +201,8 @@ services:
         condition: service_started
       cart-service:
         condition: service_started
+      inventory-service:
+        condition: service_started
       
   prometheus:
     image: prom/prometheus
@@ -197,6 +217,7 @@ services:
       - user-service
       - product-service
       - order-service
+      - inventory-service
       - cart-service
 
   redis:

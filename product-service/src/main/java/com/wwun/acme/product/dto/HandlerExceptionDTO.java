@@ -1,7 +1,6 @@
 package com.wwun.acme.product.dto;
 
 import java.time.Instant;
-import java.util.Date;
 
 public class HandlerExceptionDTO {
     String errorType;

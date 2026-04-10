@@ -17,9 +17,6 @@ public interface ProductService {
     //Product save(Product product);
     Optional<Product> update(UUID id, ProductUpdateRequestDTO productUpdateRequestDTO);
     void delete(UUID id);
-    Optional<Product> updateStock(UUID id, int amount);
-    Optional<Product> increaseStock(UUID id, int amount);
-    Optional<Product> decreaseStock(UUID id, int amount);
     BigDecimal getProductPrice(UUID id);
     List<ProductResponseDTO> getAllById(List<UUID> productsId);
 }

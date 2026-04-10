@@ -64,7 +64,7 @@ public class ProductControllerTest {
 
         when(productService.findById(productId)).thenReturn(product);
 
-        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), 20, null);
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), null);
         
         when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
         
@@ -106,15 +106,14 @@ public class ProductControllerTest {
         productCreateRequestDTO.setCategoryId(categoryId);
         productCreateRequestDTO.setPrice(new BigDecimal("10.00"));
         productCreateRequestDTO.setName("purifier");
-        productCreateRequestDTO.setStock(20);
-
+        
         UUID productId = UUID.randomUUID();
 
         Product product = new Product();
         product.setId(productId);
         when(productService.save(any(ProductCreateRequestDTO.class))).thenReturn(product);
 
-        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), 20, null);
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), null);
         
         when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
 
@@ -138,8 +137,7 @@ public class ProductControllerTest {
 
         ProductCreateRequestDTO productCreateRequestDTO = new ProductCreateRequestDTO();
         productCreateRequestDTO.setPrice(new BigDecimal("20.00"));
-        productCreateRequestDTO.setStock(10);
-
+        
         mockMvc.perform(post("/api/products")
             .content(objectMapper.writeValueAsString(productCreateRequestDTO))
             .contentType(MediaType.APPLICATION_JSON)
@@ -162,8 +160,7 @@ public class ProductControllerTest {
         request.setCategoryId(categoryId);
         request.setPrice(new BigDecimal("10.00"));
         request.setName("vacuum");
-        request.setStock(5);
- 
+        
         when(productService.save(any(ProductCreateRequestDTO.class)))
                 .thenThrow(new ProductAlreadyExistsException("Name product already exists: vacuum"));
 
@@ -189,8 +186,7 @@ public class ProductControllerTest {
         request.setCategoryId(categoryId);
         request.setName("Ghost");
         request.setPrice(new BigDecimal("50.00"));
-        request.setStock(10);
- 
+        
         when(productService.update(eq(productId), any(ProductUpdateRequestDTO.class)))
                 .thenThrow(new ProductNotFoundException("Product not found: " + productId));
  
@@ -250,7 +246,6 @@ public class ProductControllerTest {
         productUpdateRequestDTO.setCategoryId(categoryId);
         productUpdateRequestDTO.setName("Chanel");
         productUpdateRequestDTO.setPrice(new BigDecimal("339.00"));
-        productUpdateRequestDTO.setStock(100);
         productUpdateRequestDTO.setDescription("100ml");
 
         Product product = new Product();
@@ -258,7 +253,7 @@ public class ProductControllerTest {
 
         when(productService.update(eq(productId), any(ProductUpdateRequestDTO.class))).thenReturn(Optional.of(product));
 
-        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), 20, null);
+        ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), null);
         
         when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
 

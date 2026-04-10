@@ -18,7 +18,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,17 +27,12 @@ import com.wwun.acme.product.dto.ProductCreateRequestDTO;
 import com.wwun.acme.product.dto.ProductResponseDTO;
 import com.wwun.acme.product.entity.Category;
 import com.wwun.acme.product.entity.Product;
-import com.wwun.acme.product.entity.StockMovement;
-import com.wwun.acme.product.enums.StockOperation;
 import com.wwun.acme.product.exception.CategoryNotFoundException;
-import com.wwun.acme.product.exception.InsufficientStockException;
-import com.wwun.acme.product.exception.InvalidStockAmountException;
 import com.wwun.acme.product.exception.ProductAlreadyExistsException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.metric.CacheMetrics;
 import com.wwun.acme.product.repository.ProductRepository;
-import com.wwun.acme.product.repository.StockMovementRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductServiceImplTest 
@@ -46,7 +40,6 @@ public class ProductServiceImplTest
 	@Mock ProductRepository productRepository;
 	@Mock CategoryService categoryService;
 	@Mock ProductMapper productMapper;
-	@Mock StockMovementRepository stockMovementRepository;
 	@Mock CacheMetrics cacheMetrics;
 
 	@InjectMocks ProductServiceImpl productServiceImpl;
@@ -135,7 +128,6 @@ public class ProductServiceImplTest
 		product.setId(productId);
 		product.setName("vacuum");
 		product.setPrice(new BigDecimal("100.00"));
-		product.setStock(2);
 		
 		when(productMapper.toEntity(productCreateRequestDTO)).thenReturn(product);
 		when(productRepository.findByName(product.getName())).thenReturn(Optional.empty());
@@ -229,44 +221,6 @@ public class ProductServiceImplTest
 	}
 
 	@Test
-	void increaseStock_shouldIncreaseStockAndSaveMovement_whenProductExistsAndAmountIsPositive(){
-
-		//Given
-		UUID productId = UUID.randomUUID();
-
-		int amount = 20;
-
-		Product product = new Product();
-		product.setId(productId);
-		product.setStock(10);
-
-		when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-
-		when(productRepository.save(any(Product.class))).thenAnswer(invocationArg -> invocationArg.getArgument(0));
-
-		//When
-		Optional<Product> result = productServiceImpl.increaseStock(productId, amount);
-
-		//Then
-		assertTrue(result.isPresent());
-		assertEquals(productId, result.get().getId());
-		assertEquals(30, result.get().getStock());
-
-		verify(productRepository).findById(productId);
-		verify(productRepository).save(product);
-		
-		ArgumentCaptor<StockMovement> captor = ArgumentCaptor.forClass(StockMovement.class);
-		verify(stockMovementRepository).save(captor.capture());
-
-		StockMovement savedMovement = captor.getValue();
-
-		assertEquals(amount, savedMovement.getQuantity());
-		assertEquals(StockOperation.INCREASE, savedMovement.getOperation());
-		//assertSame(product, savedMovement.getProduct());
-
-	}
-
-	@Test
 	void delete_shouldThrow_whenProductDoesNotExist(){
 
 		//Given
@@ -284,124 +238,6 @@ public class ProductServiceImplTest
 		verify(productRepository).existsById(productId);
 		verify(productRepository, never()).deleteById(any(UUID.class));
 
-	}
-
-	@Test
-	void increaseStock_shouldThrow_whenAmountIsZeroOrNegative(){
-
-		//Given
-		UUID productId = UUID.randomUUID();
-
-		int amount = -1;
-
-		//When
-		InvalidStockAmountException ex = assertThrows(InvalidStockAmountException.class, () -> productServiceImpl.increaseStock(productId, amount));
-
-		//Then
-		assertTrue(ex.getMessage().toLowerCase().contains("increase amount must be positive"));
-		
-		verify(productRepository, never()).findById(any(UUID.class));
-		verify(productRepository, never()).save(any(Product.class));
-		verify(stockMovementRepository, never()).save(any(StockMovement.class));
-
-	}
-
-	@Test
-	void decreaseStock_shouldThrow_whenInsufficientStock(){
-
-		//Given
-		UUID productId = UUID.randomUUID();
-
-		int amount = 100;
-
-		Product product = new Product();
-		product.setId(productId);
-		product.setStock(10);
-
-		when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-
-		//When
-		InsufficientStockException ex = assertThrows(InsufficientStockException.class, () -> productServiceImpl.decreaseStock(productId, amount));
-
-		//Then
-		assertTrue(ex.getMessage().toLowerCase().contains("insufficient stock"));
-		assertTrue(ex.getMessage().contains(productId.toString()));
-		
-		verify(productRepository).findById(productId);
-		verify(productRepository, never()).save(any(Product.class));
-		verify(stockMovementRepository, never()).save(any(StockMovement.class));
-
-	}
-
-	@Test
-	void decreaseStock_shouldDecreaseStockAndSaveMovement_whenStockIsEnough() {
-
-		// Given
-		UUID productId = UUID.randomUUID();
-		int amount = 5;
-
-		Product product = new Product();
-		product.setId(productId);
-		product.setStock(10);
-
-		when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-		when(productRepository.save(any(Product.class)))
-				.thenAnswer(inv -> inv.getArgument(0));
-
-		// When
-		Optional<Product> result = productServiceImpl.decreaseStock(productId, amount);
-
-		// Then
-		assertTrue(result.isPresent());
-		assertEquals(productId, result.get().getId());
-		assertEquals(5, result.get().getStock());
-
-		verify(productRepository).findById(productId);
-		verify(productRepository).save(product);
-
-		ArgumentCaptor<StockMovement> captor = ArgumentCaptor.forClass(StockMovement.class);
-		verify(stockMovementRepository).save(captor.capture());
-
-		StockMovement savedMovement = captor.getValue();
-
-		assertEquals(amount, savedMovement.getQuantity());
-		assertEquals(StockOperation.DECREASE, savedMovement.getOperation());
-		//assertSame(product, savedMovement.getProduct());
-	}
-	
-	@Test
-	void updateStock_shouldSetStockAndSaveMovement_whenAmountIsValid() {
-
-		// Given
-		UUID productId = UUID.randomUUID();
-		int amount = 25;
-
-		Product product = new Product();
-		product.setId(productId);
-		product.setStock(10);
-
-		when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-		when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
-
-		// When
-		Optional<Product> result = productServiceImpl.updateStock(productId, amount);
-
-		// Then
-		assertTrue(result.isPresent());
-		assertEquals(productId, result.get().getId());
-		assertEquals(25, result.get().getStock());
-
-		verify(productRepository).findById(productId);
-		verify(productRepository).save(product);
-
-		ArgumentCaptor<StockMovement> captor = ArgumentCaptor.forClass(StockMovement.class);
-		verify(stockMovementRepository).save(captor.capture());
-
-		StockMovement savedMovement = captor.getValue();
-
-		assertEquals(amount, savedMovement.getQuantity());
-		assertEquals(StockOperation.SET, savedMovement.getOperation());
-		//assertSame(product, savedMovement.getProduct());
 	}
 
 	@Test
@@ -446,7 +282,6 @@ public class ProductServiceImplTest
 						p.getName(),
 						p.getDescription(),
 						p.getPrice(),
-						p.getStock(),
 						null
 					);
 				});

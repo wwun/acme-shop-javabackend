@@ -47,15 +47,15 @@ public class Product {
     @PositiveOrZero
     private BigDecimal price;
 
-    @NotNull
-    @PositiveOrZero
-    private Integer stock;
+    // @NotNull
+    // @PositiveOrZero
+    // private Integer stock;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<StockMovement> movements;
+    // @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    // private List<StockMovement> movements;
 
 }

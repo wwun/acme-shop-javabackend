@@ -1,11 +1,9 @@
 package com.wwun.acme.product.service;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,32 +15,24 @@ import com.wwun.acme.product.dto.ProductResponseDTO;
 import com.wwun.acme.product.dto.ProductUpdateRequestDTO;
 import com.wwun.acme.product.entity.Category;
 import com.wwun.acme.product.entity.Product;
-import com.wwun.acme.product.entity.StockMovement;
-import com.wwun.acme.product.exception.InsufficientStockException;
-import com.wwun.acme.product.exception.InvalidStockAmountException;
 import com.wwun.acme.product.exception.ProductAlreadyExistsException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.metric.CacheMetrics;
 import com.wwun.acme.product.repository.ProductRepository;
-import com.wwun.acme.product.repository.StockMovementRepository;
-
-import com.wwun.acme.product.enums.StockOperation;
 
 @Service
 public class ProductServiceImpl implements ProductService{
 
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
-    private final StockMovementRepository stockMovementRepository;
     private final ProductMapper productMapper;
     //private final RedisTemplate<String, Object> redisTemplate;
     private final CacheMetrics cacheMetrics;
     
-    public ProductServiceImpl(ProductRepository productRepository, CategoryService categoryService, StockMovementRepository stockMovementRepository, ProductMapper productMapper, CacheMetrics cacheMetrics) {
+    public ProductServiceImpl(ProductRepository productRepository, CategoryService categoryService, ProductMapper productMapper, CacheMetrics cacheMetrics) {
         this.productRepository = productRepository;
         this.categoryService = categoryService;
-        this.stockMovementRepository = stockMovementRepository;
         this.productMapper = productMapper;
         this.cacheMetrics = cacheMetrics;
     }
@@ -86,7 +76,7 @@ public class ProductServiceImpl implements ProductService{
         return productRepository.findById(productId).map(existing -> {
             existing.setName(productUpdateRequestDTO.getName());
             existing.setPrice(productUpdateRequestDTO.getPrice());
-            existing.setStock(productUpdateRequestDTO.getStock());
+            // existing.setStock(productUpdateRequestDTO.getStock());
             existing.setCategory(categoryService.findById(productUpdateRequestDTO.getCategoryId()));
             return productRepository.save(existing);
         });
@@ -100,82 +90,6 @@ public class ProductServiceImpl implements ProductService{
             throw new ProductNotFoundException("Product not found with id: " + productId);
 
         productRepository.deleteById(productId);
-    }
-
-    @Override
-    @Transactional
-    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
-    public Optional<Product> updateStock(UUID id, int amount) {
-        if (amount < 0)
-            throw new InvalidStockAmountException("Stock amount cannot be negative");
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
-
-        product.setStock(amount);
-        Product updated = productRepository.save(product);
-        
-        stockMovementRepository.save(StockMovement.builder()
-            .createdAt(Instant.now())
-            .quantity(amount)
-            .operation(StockOperation.SET)
-            //.product(updated)
-            .build());
-
-        return Optional.of(updated);
-    }
-
-
-    @Override
-    @Transactional
-    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
-    public Optional<Product> increaseStock(UUID id, int amount) {
-        if (amount <= 0)
-            throw new InvalidStockAmountException("Increase amount must be positive");
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
-
-        product.setStock(product.getStock() == null ? amount : product.getStock() + amount);
-        Product updated = productRepository.save(product);
-
-        stockMovementRepository.save(StockMovement.builder()
-            .createdAt(Instant.now())
-            .quantity(amount)
-            .operation(StockOperation.INCREASE)
-            //.product(updated)
-            .build()
-        );
-
-        return Optional.of(updated);
-    }
-
-
-    @Override
-    @Transactional
-    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
-    public Optional<Product> decreaseStock(UUID id, int amount) {
-        if (amount <= 0)
-            throw new InvalidStockAmountException("Decrease amount must be positive");
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
-
-        if (product.getStock() == null || product.getStock() < amount)
-            throw new InsufficientStockException("Insufficient stock: " + id);
-
-        product.setStock(product.getStock() - amount);
-        Product updated = productRepository.save(product);
-
-        stockMovementRepository.save(StockMovement.builder()
-            .createdAt(Instant.now())
-            .quantity(amount)
-            .operation(StockOperation.DECREASE)
-            //.product(updated)
-            .build()
-        );
-
-        return Optional.of(updated);
     }
 
     @Override
