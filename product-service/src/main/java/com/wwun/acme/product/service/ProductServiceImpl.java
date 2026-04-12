@@ -38,15 +38,27 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    @Cacheable(cacheNames = "productsAll", key = "'ALL'")
-    public List<Product> findAll() {
-        return productRepository.findAll();
+    //@Cacheable(cacheNames = "productsAll", key = "'ALL'")
+    public List<ProductResponseDTO> findAll() {
+        List<ProductResponseDTO> dtos = productRepository.findAll().stream()
+        .map(productMapper::toResponseDTO)
+        .toList();
+
+        dtos.forEach(dto -> System.out.println(
+            "DTO -> id=" + dto.id()
+            + ", name=" + dto.name()
+            + ", description=" + dto.description()
+            + ", price=" + dto.price()
+            + ", category=" + dto.category()
+        ));
+
+        return dtos;
     }
 
     @Override
-    @Cacheable(cacheNames = "productById", key = "#id")
-    public Product findById(UUID id) {
-        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+    //@Cacheable(cacheNames = "productById", key = "#id")
+    public ProductResponseDTO findById(UUID id) {
+        return productMapper.toResponseDTO(productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id)));
     }
 
     @Override

@@ -62,9 +62,11 @@ public class ProductControllerTest {
         Product product = new Product();
         product.setId(productId);
 
-        when(productService.findById(productId)).thenReturn(product);
+        //when(productService.findById(productId)).thenReturn(product);
 
         ProductResponseDTO productResponseDTO = new ProductResponseDTO(productId, "purifier", null, new BigDecimal("10.00"), null);
+
+        when(productService.findById(productId)).thenReturn(productResponseDTO);
         
         when(productMapper.toResponseDTO(product)).thenReturn(productResponseDTO);
         

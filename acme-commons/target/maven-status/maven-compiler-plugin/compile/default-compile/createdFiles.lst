@@ -1,7 +1,9 @@
 com/wwun/acme/security/JwtService.class
-com/wwun/acme/security/CategoriesEnum.class
+com/wwun/acme/security/RolesEnum.class
 com/wwun/acme/security/TokenJwtConfig.class
 com/wwun/acme/security/SecurityUtils.class
+com/wwun/acme/security/JwtFeignInterceptor.class
 com/wwun/acme/security/AuthUserPrincipal.class
+com/wwun/acme/security/AuthProviderEnum.class
 com/wwun/acme/security/CommonsConfig.class
 com/wwun/acme/security/JwtAuthConverter.class

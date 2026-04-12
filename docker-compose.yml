@@ -174,7 +174,7 @@ services:
         condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=tru
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
       
   api-gateway-server:
     build:

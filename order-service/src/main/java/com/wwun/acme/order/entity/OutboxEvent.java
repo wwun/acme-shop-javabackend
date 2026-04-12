@@ -7,6 +7,8 @@ import com.wwun.acme.order.enums.OutboxEventStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
@@ -42,8 +44,9 @@ public class OutboxEvent {
     @NotBlank
     private String payload;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private OutboxEventStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -51,19 +54,19 @@ public class OutboxEvent {
     @PrePersist
     void prePersist(){
         this.createdAt = Instant.now();
-        this.status = OutboxEventStatus.PENDING.name();
+        this.status = OutboxEventStatus.PENDING;
     }
 
     public void markAsPending(){
-        this.status = OutboxEventStatus.PENDING.name();
+        this.status = OutboxEventStatus.PENDING;
     }
 
     public void markAsProcessed(){
-        this.status = OutboxEventStatus.PROCESSED.name();
+        this.status = OutboxEventStatus.PROCESSED;
     }
 
     public void markAsFailed(){
-        this.status = OutboxEventStatus.FAILED.name();
+        this.status = OutboxEventStatus.FAILED;
     }
     
 }

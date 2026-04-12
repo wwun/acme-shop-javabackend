@@ -60,12 +60,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
     
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<HandlerExceptionDTO> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        HandlerExceptionDTO error = new HandlerExceptionDTO("VALIDATION_ERROR", "Request validation failed", HttpStatus.BAD_REQUEST.value(), Instant.now());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
     //InvalidCategoryException
 
     public HandlerExceptionDTO setErrorValues(String errorType, String message, int statusCode, Instant timestamp){

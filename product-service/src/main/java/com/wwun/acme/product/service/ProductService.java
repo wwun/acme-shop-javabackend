@@ -11,8 +11,8 @@ import com.wwun.acme.product.dto.ProductUpdateRequestDTO;
 import com.wwun.acme.product.entity.Product;
 
 public interface ProductService {
-    List<Product> findAll();
-    Product findById(UUID id);
+    List<ProductResponseDTO> findAll();
+    ProductResponseDTO findById(UUID id);
     Product save(ProductCreateRequestDTO productCreateRequestDTO);
     //Product save(Product product);
     Optional<Product> update(UUID id, ProductUpdateRequestDTO productUpdateRequestDTO);

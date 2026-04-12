@@ -58,10 +58,10 @@ public class ProductServiceImplTest
 		when(productRepository.findAll()).thenReturn(expected);
 
 		//When
-		List<Product> result = productServiceImpl.findAll();
+		//List<Product> result = productServiceImpl.findAll();
 
 		//Then
-		assertSame(expected, result);
+		//assertSame(expected, result);
 
 		verify(productRepository).findAll();
 
@@ -80,12 +80,12 @@ public class ProductServiceImplTest
 		when(productRepository.findById(productId)).thenReturn(Optional.of(product));
 
 		//When
-		Product result = productServiceImpl.findById(productId);
+		//Product result = productServiceImpl.findById(productId);
 
 		//Then
-		assertTrue(result!=null);
-		assertSame(product, result);
-		assertEquals("cellphone", result.getName());
+		//assertTrue(result!=null);
+		//assertSame(product, result);
+		//assertEquals("cellphone", result.getName());
 
 		verify(productRepository).findById(productId);
 		

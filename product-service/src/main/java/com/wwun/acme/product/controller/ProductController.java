@@ -36,16 +36,13 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
     public ResponseEntity<List<ProductResponseDTO>> getAllProducts(){
-        return ResponseEntity.status(HttpStatus.OK).body(productService.findAll()
-            .stream()
-            .map(productMapper::toResponseDTO)  //map(product -> productMapper.toResponseDTO(product))
-            .toList());
+        return ResponseEntity.status(HttpStatus.OK).body(productService.findAll());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
     public ProductResponseDTO getProductById(@PathVariable UUID id){
-        return productMapper.toResponseDTO(productService.findById(id));
+        return productService.findById(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
