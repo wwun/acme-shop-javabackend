@@ -52,45 +52,6 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toResponseDTO(product));
     }
 
-    // @PreAuthorize("hasRole('ADMIN')")
-    // @PutMapping("/{id}")
-    // public ResponseEntity<?> updateProduct(@PathVariable UUID id, @Valid @RequestBody ProductUpdateRequestDTO productUpdateRequestDTO){
-    //     Optional<Product> updatedProduct = productService.update(id, productUpdateRequestDTO);
-    //     return ResponseEntity.status(HttpStatus.OK).body(productMapper.toResponseDTO(updatedProduct.get()));        
-    // }
-
-    // @PreAuthorize("hasRole('ADMIN')")
-    // @DeleteMapping("/{id}")
-    // public ResponseEntity<?> deleteProduct(@PathVariable UUID id){
-    //     productService.delete(id);
-    //     return ResponseEntity.status(HttpStatus.OK).build();
-    // }
-
-    // @PreAuthorize("hasRole('ADMIN')")
-    // @PatchMapping("/{id}/{stock}/{operation}")
-    // public ResponseEntity<?> updateProductStock(@PathVariable UUID id, @PathVariable int stock, @PathVariable StockOperation operation ){ //@RequestParam http://example.com/users?name=Juan&age=30 @RequestParam("age") int age
-    //     Optional<Product> product;
-        
-    //     switch(operation){
-    //         case INCREASE:
-    //             product = productService.increaseStock(id, stock);
-    //             break;
-    //         case DECREASE:
-    //             product = productService.decreaseStock(id, stock);
-    //             break;
-    //         case SET:
-    //             product = productService.updateStock(id, stock);
-    //             break;
-    //         default:
-    //             throw new IllegalArgumentException("Invalid stock operation: " + operation);
-    //     }
-        
-    //     return ResponseEntity.status(HttpStatus.OK).body(productMapper.toResponseDTO(product.get()));
-                
-    //}
-
-    //
-
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}/price")
     public ResponseEntity<?> getProductPrice(@PathVariable UUID id){
