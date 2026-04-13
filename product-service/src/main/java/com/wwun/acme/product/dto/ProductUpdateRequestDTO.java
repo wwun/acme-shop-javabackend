@@ -30,10 +30,6 @@ public class ProductUpdateRequestDTO {  //what the client sends to update an exi
     private BigDecimal price;
 
     @NotNull
-    @PositiveOrZero
-    private Integer stock;
-
-    @NotNull
     private UUID categoryId;
 
 }

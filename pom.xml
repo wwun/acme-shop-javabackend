@@ -38,12 +38,12 @@
       <dependency>
         <groupId>org.mapstruct</groupId>
         <artifactId>mapstruct</artifactId>
-        <version>1.5.5.Final</version>
+        <version>1.6.3</version>
       </dependency>
       <dependency>
         <groupId>org.mapstruct</groupId>
         <artifactId>mapstruct-processor</artifactId>
-        <version>1.5.5.Final</version>
+        <version>1.6.3</version>
         <scope>provided</scope>
       </dependency>
       <!-- Lombok -->
@@ -51,6 +51,12 @@
         <groupId>org.projectlombok</groupId>
         <artifactId>lombok</artifactId>
         <version>1.18.30</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok-mapstruct-binding</artifactId>
+        <version>0.2.0</version>
         <scope>provided</scope>
       </dependency>
       <!-- Jwt -->
@@ -116,6 +122,7 @@
     <module>user-service</module>
     <module>cart-service</module>
     <module>auth-service</module>
+    <module>inventory-service</module>
   </modules>
   <build>
     <pluginManagement>

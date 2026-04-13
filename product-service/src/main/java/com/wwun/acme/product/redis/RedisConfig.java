@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 @Configuration
 @EnableCaching
@@ -29,7 +31,12 @@ public class RedisConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
-        RedisCacheConfiguration defaultConf = RedisCacheConfiguration.defaultCacheConfig().disableCachingNullValues();
+        RedisCacheConfiguration defaultConf = RedisCacheConfiguration.defaultCacheConfig().disableCachingNullValues()
+            .serializeValuesWith(
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    new GenericJackson2JsonRedisSerializer()
+                )
+            );
 
         Map<String, RedisCacheConfiguration> config = new HashMap<>();
         config.put("productById", defaultConf.entryTtl(Duration.ofSeconds(300))); // 5 min

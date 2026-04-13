@@ -1,12 +1,12 @@
 package com.wwun.acme.product.service;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -17,58 +17,79 @@ import com.wwun.acme.product.dto.ProductResponseDTO;
 import com.wwun.acme.product.dto.ProductUpdateRequestDTO;
 import com.wwun.acme.product.entity.Category;
 import com.wwun.acme.product.entity.Product;
-import com.wwun.acme.product.entity.StockMovement;
-import com.wwun.acme.product.exception.InsufficientStockException;
-import com.wwun.acme.product.exception.InvalidStockAmountException;
 import com.wwun.acme.product.exception.ProductAlreadyExistsException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.metric.CacheMetrics;
 import com.wwun.acme.product.repository.ProductRepository;
-import com.wwun.acme.product.repository.StockMovementRepository;
-
-import com.wwun.acme.product.enums.StockOperation;
 
 @Service
 public class ProductServiceImpl implements ProductService{
 
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
-    private final StockMovementRepository stockMovementRepository;
     private final ProductMapper productMapper;
     //private final RedisTemplate<String, Object> redisTemplate;
     private final CacheMetrics cacheMetrics;
+
+    private final static Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
     
-    public ProductServiceImpl(ProductRepository productRepository, CategoryService categoryService, StockMovementRepository stockMovementRepository, ProductMapper productMapper, CacheMetrics cacheMetrics) {
+    public ProductServiceImpl(ProductRepository productRepository, CategoryService categoryService, ProductMapper productMapper, CacheMetrics cacheMetrics) {
         this.productRepository = productRepository;
         this.categoryService = categoryService;
-        this.stockMovementRepository = stockMovementRepository;
         this.productMapper = productMapper;
         this.cacheMetrics = cacheMetrics;
     }
 
     @Override
     @Cacheable(cacheNames = "productsAll", key = "'ALL'")
-    public List<Product> findAll() {
-        return productRepository.findAll();
+    public List<ProductResponseDTO> findAll() {
+        log.info("finding all products");
+        List<ProductResponseDTO> dtos = productRepository.findAll().stream().map(productMapper::toResponseDTO).toList();
+
+        return dtos;
     }
 
     @Override
     @Cacheable(cacheNames = "productById", key = "#id")
-    public Product findById(UUID id) {
-        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+    public ProductResponseDTO findById(UUID id) {
+        if(id==null){
+            log.warn("findById a product called with id null");
+            throw new IllegalArgumentException("id cannot be null");
+        }
+        log.info("Searching product by id");
+        return productMapper.toResponseDTO(productRepository.findById(id).orElseThrow(() -> {
+            log.error("Product not found with id: ", id);
+            return new ProductNotFoundException("Product not found with id: " + id);
+        }));
     }
 
     @Override
     @Transactional
     @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
     public Product save(ProductCreateRequestDTO productCreateRequestDTO) {
-        Category category = categoryService.findById(productCreateRequestDTO.getCategoryId());
+        if(productCreateRequestDTO==null){
+            log.warn("request dto to create product cannot be null");
+            throw new IllegalArgumentException("productCreateRequestDTO cannot be null");
+        }
+
+        UUID categoryId = productCreateRequestDTO.getCategoryId();
+
+        if(categoryId==null){
+            log.warn("save product called with category id null");
+            throw new IllegalArgumentException("categoryId cannot be null");
+        }
+        
+        Category category = categoryService.findById(categoryId);
         Product product = productMapper.toEntity(productCreateRequestDTO);
         product.setCategory(category);
 
-        if(productRepository.findByName(product.getName()).isPresent())
+        if(productRepository.findByName(product.getName()).isPresent()){
+            log.error("Name product already exists: ", product.getName());
             throw new ProductAlreadyExistsException("Name product already exists: " + product.getName());
+        }
+
+        log.info("Saving product initiated");
 
         return productRepository.save(product);
     }
@@ -77,16 +98,24 @@ public class ProductServiceImpl implements ProductService{
     @Transactional
     @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
     public Optional<Product> update(UUID productId, ProductUpdateRequestDTO productUpdateRequestDTO) {
+        if(productUpdateRequestDTO==null){
+            log.warn("request dto to update product cannot be null");
+            throw new IllegalArgumentException("productUpdateRequestDTO cannot be null");
+        }
+
         productRepository.findByName(productUpdateRequestDTO.getName())
             .ifPresent(existing -> {
-                if (!existing.getId().equals(productId))
+                if (!existing.getId().equals(productId)){
+                    log.error("Product name already exists");
                     throw new ProductAlreadyExistsException("Product name already exists");
+                }
             });
+
+        log.info("Updating product initiated");
 
         return productRepository.findById(productId).map(existing -> {
             existing.setName(productUpdateRequestDTO.getName());
             existing.setPrice(productUpdateRequestDTO.getPrice());
-            existing.setStock(productUpdateRequestDTO.getStock());
             existing.setCategory(categoryService.findById(productUpdateRequestDTO.getCategoryId()));
             return productRepository.save(existing);
         });
@@ -96,98 +125,43 @@ public class ProductServiceImpl implements ProductService{
     @Transactional
     @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
     public void delete(UUID productId) {
-        if (!productRepository.existsById(productId))
+        if(productId==null){
+            log.warn("delete a product called with id null");
+            throw new IllegalArgumentException("id cannot be null");
+        }
+
+        if (!productRepository.existsById(productId)){
+            log.error("Product not found with id: ", productId);
             throw new ProductNotFoundException("Product not found with id: " + productId);
+        }
+
+        log.info("Deleting product initiated");
 
         productRepository.deleteById(productId);
     }
 
     @Override
-    @Transactional
-    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
-    public Optional<Product> updateStock(UUID id, int amount) {
-        if (amount < 0)
-            throw new InvalidStockAmountException("Stock amount cannot be negative");
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
-
-        product.setStock(amount);
-        Product updated = productRepository.save(product);
-        
-        stockMovementRepository.save(StockMovement.builder()
-            .timestamp(Instant.now())
-            .quantity(amount)
-            .operation(StockOperation.SET)
-            .product(updated)
-            .build());
-
-        return Optional.of(updated);
-    }
-
-
-    @Override
-    @Transactional
-    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
-    public Optional<Product> increaseStock(UUID id, int amount) {
-        if (amount <= 0)
-            throw new InvalidStockAmountException("Increase amount must be positive");
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
-
-        product.setStock(product.getStock() == null ? amount : product.getStock() + amount);
-        Product updated = productRepository.save(product);
-
-        stockMovementRepository.save(StockMovement.builder()
-            .timestamp(Instant.now())
-            .quantity(amount)
-            .operation(StockOperation.INCREASE)
-            .product(updated)
-            .build()
-        );
-
-        return Optional.of(updated);
-    }
-
-
-    @Override
-    @Transactional
-    @CacheEvict(cacheNames = {"productById", "productsAll"}, allEntries = true)
-    public Optional<Product> decreaseStock(UUID id, int amount) {
-        if (amount <= 0)
-            throw new InvalidStockAmountException("Decrease amount must be positive");
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found: " + id));
-
-        if (product.getStock() == null || product.getStock() < amount)
-            throw new InsufficientStockException("Insufficient stock: " + id);
-
-        product.setStock(product.getStock() - amount);
-        Product updated = productRepository.save(product);
-
-        stockMovementRepository.save(StockMovement.builder()
-            .timestamp(Instant.now())
-            .quantity(amount)
-            .operation(StockOperation.DECREASE)
-            .product(updated)
-            .build()
-        );
-
-        return Optional.of(updated);
-    }
-
-    @Override
     public BigDecimal getProductPrice(UUID id){
-        return productRepository.findById(id).map(Product::getPrice).orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+        if(id==null){
+            log.warn("findById a product called with id null");
+            throw new IllegalArgumentException("id cannot be null");
+        }
+
+        log.info("getProductPrice initiated");
+
+        return productRepository.findById(id).map(Product::getPrice).orElseThrow(() -> {
+            log.error("Product not found with id: ", id);
+            return new ProductNotFoundException("Product not found with id: " + id);
+        });
     }
 
     @Override
     public List<ProductResponseDTO> getAllById(List<UUID> productsId){
         List<Product> found = productRepository.findAllById(productsId);
-        if (found.size() != productsId.size())
+        if (found.size() != productsId.size()){
+            log.error("One or more products not found");            
             throw new ProductNotFoundException("One or more products not found");
+        }
         return found.stream().map(productMapper::toResponseDTO).toList();
     }
 

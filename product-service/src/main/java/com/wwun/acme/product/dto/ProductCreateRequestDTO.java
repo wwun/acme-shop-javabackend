@@ -29,10 +29,6 @@ public class ProductCreateRequestDTO {
     private BigDecimal price;
 
     @NotNull
-    @PositiveOrZero
-    private Integer stock;
-
-    @NotNull
     private UUID categoryId;
 
 }

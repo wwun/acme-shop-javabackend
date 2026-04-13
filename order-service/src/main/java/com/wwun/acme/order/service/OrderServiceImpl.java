@@ -2,8 +2,6 @@ package com.wwun.acme.order.service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,6 +19,7 @@ import com.wwun.acme.order.dto.order.orderItem.OrderItemCreateRequestDTO;
 import com.wwun.acme.order.dto.product.ProductResponseDTO;
 import com.wwun.acme.order.entity.Order;
 import com.wwun.acme.order.entity.OrderItem;
+import com.wwun.acme.order.enums.OrderStatus;
 import com.wwun.acme.order.enums.OutboxEventType;
 import com.wwun.acme.order.exception.OrderDuplicatedDifferentIKeyException;
 import com.wwun.acme.order.exception.OrderNotFoundException;
@@ -53,7 +52,6 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    @Transactional
     public Order save(UUID idempotencyKey, OrderCreateRequestDTO orderCreateRequestDTO) {
 
         UUID userId = SecurityUtils.getCurrentUserId();
@@ -102,6 +100,8 @@ public class OrderServiceImpl implements OrderService{
             throw new OrderDuplicatedDifferentIKeyException("Conflict, Idempotency key already used with a different request payload");
         }
         
+        order.setStatus(OrderStatus.PENDING_CONFIRMATION);
+
         Order orderSaved = orderRepository.save(order);
 
         OrderCreatedEvent eventPayload = buildOrderCreatedEvent(orderSaved);

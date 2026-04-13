@@ -1,7 +1,6 @@
 package com.wwun.acme.product.controller;
 
 import java.time.Instant;
-import java.util.Date;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,9 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.wwun.acme.product.dto.HandlerExceptionDTO;
 import com.wwun.acme.product.exception.CategoryNotFoundException;
-import com.wwun.acme.product.exception.InsufficientStockException;
 import com.wwun.acme.product.exception.InvalidProductException;
-import com.wwun.acme.product.exception.InvalidStockAmountException;
 import com.wwun.acme.product.exception.ProductAlreadyExistsException;
 import com.wwun.acme.product.exception.ProductNotFoundException;
 
@@ -30,18 +27,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidProductException.class)
     public ResponseEntity<HandlerExceptionDTO> handleInvalidProductException(InvalidProductException e){
         HandlerExceptionDTO error = setErrorValues("INVALID_PRODUCT", e.getMessage(), HttpStatus.BAD_REQUEST.value(), Instant.now());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(InvalidStockAmountException.class)
-    public ResponseEntity<HandlerExceptionDTO> handleInvalidStockAmountException(InvalidStockAmountException e){
-        HandlerExceptionDTO error = setErrorValues("INVALID_STOCK_AMOUNT", e.getMessage(), HttpStatus.BAD_REQUEST.value(), Instant.now());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<HandlerExceptionDTO> handleInsufficientStockException(InsufficientStockException e){
-        HandlerExceptionDTO error = setErrorValues("INSUFFICIENT_STOCK", e.getMessage(), HttpStatus.BAD_REQUEST.value(), Instant.now());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
@@ -75,12 +60,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
     
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<HandlerExceptionDTO> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        HandlerExceptionDTO error = new HandlerExceptionDTO("VALIDATION_ERROR", "Request validation failed", HttpStatus.BAD_REQUEST.value(), Instant.now());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
     //InvalidCategoryException
 
     public HandlerExceptionDTO setErrorValues(String errorType, String message, int statusCode, Instant timestamp){

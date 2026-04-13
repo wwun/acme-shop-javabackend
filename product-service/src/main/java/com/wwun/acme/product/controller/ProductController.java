@@ -1,28 +1,21 @@
 package com.wwun.acme.product.controller;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wwun.acme.product.dto.ProductCreateRequestDTO;
 import com.wwun.acme.product.dto.ProductResponseDTO;
-import com.wwun.acme.product.dto.ProductUpdateRequestDTO;
 import com.wwun.acme.product.entity.Product;
-import com.wwun.acme.product.enums.StockOperation;
-import com.wwun.acme.product.exception.ProductNotFoundException;
 import com.wwun.acme.product.mapper.ProductMapper;
 import com.wwun.acme.product.service.ProductService;
 
@@ -43,16 +36,13 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
     public ResponseEntity<List<ProductResponseDTO>> getAllProducts(){
-        return ResponseEntity.status(HttpStatus.OK).body(productService.findAll()
-            .stream()
-            .map(productMapper::toResponseDTO)  //map(product -> productMapper.toResponseDTO(product))
-            .toList());
+        return ResponseEntity.status(HttpStatus.OK).body(productService.findAll());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
     public ProductResponseDTO getProductById(@PathVariable UUID id){
-        return productMapper.toResponseDTO(productService.findById(id));
+        return productService.findById(id);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -61,45 +51,6 @@ public class ProductController {
         Product product = productService.save(productCreateRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toResponseDTO(product));
     }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateProduct(@PathVariable UUID id, @Valid @RequestBody ProductUpdateRequestDTO productUpdateRequestDTO){
-        Optional<Product> updatedProduct = productService.update(id, productUpdateRequestDTO);
-        return ResponseEntity.status(HttpStatus.OK).body(productMapper.toResponseDTO(updatedProduct.get()));        
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable UUID id){
-        productService.delete(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/{id}/{stock}/{operation}")
-    public ResponseEntity<?> updateProductStock(@PathVariable UUID id, @PathVariable int stock, @PathVariable StockOperation operation ){ //@RequestParam http://example.com/users?name=Juan&age=30 @RequestParam("age") int age
-        Optional<Product> product;
-        
-        switch(operation){
-            case INCREASE:
-                product = productService.increaseStock(id, stock);
-                break;
-            case DECREASE:
-                product = productService.decreaseStock(id, stock);
-                break;
-            case SET:
-                product = productService.updateStock(id, stock);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid stock operation: " + operation);
-        }
-        
-        return ResponseEntity.status(HttpStatus.OK).body(productMapper.toResponseDTO(product.get()));
-                
-    }
-
-    //
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}/price")
