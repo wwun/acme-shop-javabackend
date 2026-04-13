@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 public class OutboxEvent {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "aggregate_id", nullable = false)
