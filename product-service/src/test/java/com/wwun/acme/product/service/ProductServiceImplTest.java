@@ -53,6 +53,7 @@ public class ProductServiceImplTest
 	void findAll_shouldReturnAllProducts() {
 
 		//Given
+
 		// List<Product> expected = List.of(new Product(), new Product());
 
 		// when(productRepository.findAll()).thenReturn(expected);
@@ -112,7 +113,7 @@ public class ProductServiceImplTest
 	void save_shouldPersistProduct_whenCategoryExists(){
 
 		//Give
-		ProductCreateRequestDTO productCreateRequestDTO = mock(ProductCreateRequestDTO.class);
+		//ProductCreateRequestDTO productCreateRequestDTO = mock(ProductCreateRequestDTO.class);
 		
 		// UUID categoryId = UUID.randomUUID();
 		// Category category = new Category();
@@ -263,10 +264,12 @@ public class ProductServiceImplTest
  
     @Test
     void getAllById_shouldReturnAll_whenAllProductsExist() {
-        // Given
-        // UUID id1 = UUID.randomUUID();
-        // UUID id2 = UUID.randomUUID();
-        // List<UUID> ids = List.of(id1, id2);
+
+        // //Given
+
+        // // UUID id1 = UUID.randomUUID();
+        // // UUID id2 = UUID.randomUUID();
+        // // List<UUID> ids = List.of(id1, id2);
  
         // Product p1 = new Product();
         // p1.setId(id1);
