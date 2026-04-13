@@ -268,13 +268,13 @@ public class ProductServiceImplTest
     @Test
     void getAllById_shouldReturnAll_whenAllProductsExist() {
 <<<<<<< HEAD
-        // Given
+        // //Given
 =======
         // //Given
 >>>>>>> ci/pr-validation
-        // UUID id1 = UUID.randomUUID();
-        // UUID id2 = UUID.randomUUID();
-        // List<UUID> ids = List.of(id1, id2);
+        // // UUID id1 = UUID.randomUUID();
+        // // UUID id2 = UUID.randomUUID();
+        // // List<UUID> ids = List.of(id1, id2);
  
         // Product p1 = new Product();
         // p1.setId(id1);
