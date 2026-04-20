@@ -38,6 +38,7 @@ jobs:
           docker build -t ghcr.io/${{ github.repository }}/order-service:${{ github.sha }} ./order-service
           docker build -t ghcr.io/${{ github.repository }}/user-service:${{ github.sha }} ./user-service
           docker build -t ghcr.io/${{ github.repository }}/config-server:${{ github.sha }} ./config-server
+          docker build -t ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }} ./inventory-service
         
       - name: Push Docker images
         run: |
@@ -45,3 +46,4 @@ jobs:
           docker push ghcr.io/${{ github.repository }}/order-service:${{ github.sha}}
           docker push ghcr.io/${{ github.repository }}/user-service:${{ github.sha}}
           docker push ghcr.io/${{ github.repository }}/config-server:${{ github.sha}}
+          docker push ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }}
