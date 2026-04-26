@@ -146,6 +146,12 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 		</dependency>
 
+		<!-- Kafka -->
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+        	<artifactId>spring-kafka</artifactId>
+		</dependency>
+
 		<!-- Own Modules -->
 		<dependency>
 			<groupId>com.wwun.acme</groupId>

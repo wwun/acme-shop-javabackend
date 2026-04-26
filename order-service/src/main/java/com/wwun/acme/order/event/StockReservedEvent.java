@@ -1,4 +1,4 @@
-package com.wwun.acme.inventory.event;
+package com.wwun.acme.order.event;
 
 import java.util.UUID;
 
