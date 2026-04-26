@@ -41,6 +41,7 @@ jobs:
           docker build -t ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }} ./inventory-service
           docker build -t ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }} ./auth-service
           docker build -t ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }} ./api-gateway-server
+          docker build -t ghcr.io/${{ github.repository }}/eureka-server:${{ github.sha }} ./eureka-server
         
       - name: Push Docker images
         run: |
@@ -51,3 +52,4 @@ jobs:
           docker push ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }}
           docker push ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }}
           docker push ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/eureka-server:${{ github.sha }}
