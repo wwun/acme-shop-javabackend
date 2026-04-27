@@ -1,7 +1,6 @@
 networks:
   acme-net:
     name: acme-net
-    driver: bridge
 
 services:
 
