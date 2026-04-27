@@ -15,6 +15,19 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        service:
+          - config-server
+          - eureka-server
+          - product-service
+          - inventory-service
+          - order-service
+          - auth-service
+          - user-service
+          - cart-service
+          - api-gateway-server
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -34,22 +47,10 @@ jobs:
         
       - name: Build docker images
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/product-service:${{ github.sha }} ./product-service
-          docker build -t ghcr.io/${{ github.repository }}/order-service:${{ github.sha }} ./order-service
-          docker build -t ghcr.io/${{ github.repository }}/user-service:${{ github.sha }} ./user-service
-          docker build -t ghcr.io/${{ github.repository }}/config-server:${{ github.sha }} ./config-server
-          docker build -t ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }} ./inventory-service
-          docker build -t ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }} ./auth-service
-          docker build -t ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }} ./api-gateway-server
-          docker build -t ghcr.io/${{ github.repository }}/eureka-server:${{ github.sha }} ./eureka-server
+          docker build -t ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} -t ghcr.io/${{ github.repository }}/${{matrix.service}}:latest ./${{matrix.service}}
+          
         
       - name: Push Docker images
         run: |
-          docker push ghcr.io/${{ github.repository }}/product-service:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/order-service:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/user-service:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/config-server:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}/eureka-server:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/${{matrix.service}}:${{ github.sha}}
+          docker push ghcr.io/${{ github.repository }}/${{matrix.service}}:latest
