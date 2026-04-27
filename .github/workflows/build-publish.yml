@@ -47,10 +47,10 @@ jobs:
         
       - name: Build docker images
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/{{ matrix.service }}:${{ github.sha }} -t ghcr.io/${{ github.repository }}/{{ matrix.service }}:latest ./{{ matrix.service }}
+          docker build -t ghcr.io/${{ github.repository }}/{{ matrix.service }}:${{ github.sha }} -t ghcr.io/${{ github.repository }}/{{matrix.service}}:latest ./{{matrix.service}}
           
         
       - name: Push Docker images
         run: |
-          docker push ghcr.io/${{ github.repository }}/{{ matrix.service }}:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/{{ matrix.service }}:latest
+          docker push ghcr.io/${{ github.repository }}/{{matrix.service}}:${{ github.sha}}
+          docker push ghcr.io/${{ github.repository }}/{{matrix.service}}:latest
