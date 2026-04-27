@@ -5,27 +5,13 @@ networks:
 
 services:
 
-  build-stage:
-    build:
-      context: .
-      dockerfile: Dockerfile.base
-    image: acme-build
-    command: ["true"]
-    networks:
-      - acme-net
-
   config-server:
-    build:
-      context: .
-      dockerfile: ./config-server/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/config-server:latest
     container_name: config-server
     ports:
       - "8888:8888"
     networks:
       - acme-net
-    depends_on:
-      build-stage:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep -q '\"status\"\\s*:\\s*\"UP\"'"]
       interval: 10s
@@ -34,9 +20,7 @@ services:
       start_period: 20s
 
   eureka-server:
-    build:
-      context: .
-      dockerfile: ./eureka-server/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/eureka-server:latest
     container_name: eureka-server
     ports:
       - "8761:8761"
@@ -55,9 +39,7 @@ services:
       start_period: 20s
   
   user-service:
-    build:
-      context: .
-      dockerfile: ./user-service/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/user-service:latest
     container_name: user-service
     ports:
       - "8081:8001"
@@ -67,22 +49,13 @@ services:
       eureka-server:
         condition: service_healthy
       config-server:
-        condition: service_healthy
-   
+        condition: service_healthy   
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
 
   product-service:
-    build:
-      context: .
-      dockerfile: ./product-service/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/product-service:latest
     container_name: product-service
     ports:
       - "8077:8001"
@@ -98,9 +71,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
       
   order-service:
-    build:
-      context: .
-      dockerfile: ./order-service/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/order-service:latest
     container_name: order-service
     ports:
       - "8088:8001"
@@ -116,9 +87,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
       
   cart-service:
-    build:
-      context: .
-      dockerfile: ./cart-service/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/cart-service:latest
     container_name: cart-service
     ports:
       - "8085:8001"
@@ -136,9 +105,7 @@ services:
       #- EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
 
   auth-service:
-    build:
-      context: .
-      dockerfile: ./auth-service/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/auth-service:latest
     container_name: auth-service
     ports:
       - "8089:8001"
@@ -159,9 +126,7 @@ services:
       # - EUREKA_DEFAULT_ZONE=${EUREKA_DEFAULT_ZONE}
 
   inventory-service:
-    build:
-      context: .
-      dockerfile: ./inventory-service/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/inventory-service:latest
     container_name: inventory-service
     ports:
       - "8092:8001"
@@ -177,9 +142,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
       
   api-gateway-server:
-    build:
-      context: .
-      dockerfile: ./api-gateway-server/Dockerfile
+    image: ghcr.io/wwun/acme-shop-javabackend/api-gateway-server:latest
     container_name: api-gateway-server
     ports:
       - "8090:8090"
