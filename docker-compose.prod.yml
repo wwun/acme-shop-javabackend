@@ -29,8 +29,6 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
-      build-stage:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q '\"status\"\\s*:\\s*\"UP\"'"]
       interval: 10s
