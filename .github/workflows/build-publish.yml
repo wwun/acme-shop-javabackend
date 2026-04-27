@@ -34,22 +34,42 @@ jobs:
         
       - name: Build docker images
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/product-service:${{ github.sha }} ./product-service
-          docker build -t ghcr.io/${{ github.repository }}/order-service:${{ github.sha }} ./order-service
-          docker build -t ghcr.io/${{ github.repository }}/user-service:${{ github.sha }} ./user-service
-          docker build -t ghcr.io/${{ github.repository }}/config-server:${{ github.sha }} ./config-server
-          docker build -t ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }} ./inventory-service
-          docker build -t ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }} ./auth-service
-          docker build -t ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }} ./api-gateway-server
-          docker build -t ghcr.io/${{ github.repository }}/eureka-server:${{ github.sha }} ./eureka-server
+          docker build -t ghcr.io/${{ github.repository }}/config-server:${{ github.sha }} -t ghcr.io/${{ github.repository }}/config-server:latest ./config-server
+          docker build -t ghcr.io/${{ github.repository }}/eureka-server:${{ github.sha }} -t ghcr.io/${{ github.repository }}/eureka-server:latest ./eureka-server
+          docker build -t ghcr.io/${{ github.repository }}/product-service:${{ github.sha }} -t ghcr.io/${{ github.repository }}/product-service:latest ./product-service
+          docker build -t ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }} -t ghcr.io/${{ github.repository }}/inventory-service:latest ./inventory-service
+          docker build -t ghcr.io/${{ github.repository }}/order-service:${{ github.sha }} -t ghcr.io/${{ github.repository }}/order-service:latest ./order-service
+          docker build -t ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }} -t ghcr.io/${{ github.repository }}/auth-service:latest ./auth-service
+          docker build -t ghcr.io/${{ github.repository }}/user-service:${{ github.sha }} -t ghcr.io/${{ github.repository }}/user-service:latest ./user-service
+          docker build -t ghcr.io/${{ github.repository }}.cart-service:${{ github.sha }} -t ghcr.io/${{ github.repository }}.cart-service:latest ./cart-service
+          docker build -t ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }} -t ghcr.io/${{ github.repository }}/api-gateway-server:latest ./api-gateway-server
+          
         
       - name: Push Docker images
         run: |
-          docker push ghcr.io/${{ github.repository }}/product-service:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/order-service:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/user-service:${{ github.sha}}
           docker push ghcr.io/${{ github.repository }}/config-server:${{ github.sha}}
-          docker push ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/config-server:latest
+          
           docker push ghcr.io/${{ github.repository }}/eureka-server:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/eureka-server:latest
+          
+          docker push ghcr.io/${{ github.repository }}/product-service:${{ github.sha}}
+          docker push ghcr.io/${{ github.repository }}/product-service:latest
+          
+          docker push ghcr.io/${{ github.repository }}/inventory-service:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/inventory-service:latest
+          
+          docker push ghcr.io/${{ github.repository }}/order-service:${{ github.sha}}
+          docker push ghcr.io/${{ github.repository }}/order-service:latest
+          
+          docker push ghcr.io/${{ github.repository }}/auth-service:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/auth-service:latest
+          
+          docker push ghcr.io/${{ github.repository }}/user-service:${{ github.sha}}
+          docker push ghcr.io/${{ github.repository }}/user-service:latest
+          
+          docker push ghcr.io/${{ github.repository }}/cart-service:{{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/cart-service:latest
+          
+          docker push ghcr.io/${{ github.repository }}/api-gateway-server:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/api-gateway-server:latest
