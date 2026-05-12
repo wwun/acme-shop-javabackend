@@ -15,7 +15,7 @@ public class KafkaOrderProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private static final Logger log = LoggerFactory.getLogger(KafkaOrderProducer.class);
 
-    @Value("{kafka.topics.order-created}")
+    @Value("${kafka.topics.order-created}")
     private String orderCreatedTopic;
 
     public void publishOrderCreated(String payload){
