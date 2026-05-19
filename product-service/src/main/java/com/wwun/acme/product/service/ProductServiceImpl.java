@@ -1,6 +1,7 @@
 package com.wwun.acme.product.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,22 +47,24 @@ public class ProductServiceImpl implements ProductService{
     @Cacheable(cacheNames = "productsAll", key = "'ALL'")
     public List<ProductResponseDTO> findAll() {
         log.info("finding all products");
-        List<ProductResponseDTO> dtos = productRepository.findAll().stream().map(productMapper::toResponseDTO).toList();
+        List<ProductResponseDTO> dtos = new ArrayList<>(
+            productRepository.findAll().stream().map(productMapper::toResponseDTO).toList()
+        );
 
         return dtos;
     }
 
     @Override
-    @Cacheable(cacheNames = "productById", key = "#id")
-    public ProductResponseDTO findById(UUID id) {
-        if(id==null){
+    @Cacheable(cacheNames = "productById", key = "#productId")
+    public ProductResponseDTO findById(UUID productId) {
+        if(productId==null){
             log.warn("findById a product called with id null");
             throw new IllegalArgumentException("id cannot be null");
         }
         log.info("Searching product by id");
-        return productMapper.toResponseDTO(productRepository.findById(id).orElseThrow(() -> {
-            log.error("Product not found with id: ", id);
-            return new ProductNotFoundException("Product not found with id: " + id);
+        return productMapper.toResponseDTO(productRepository.findById(productId).orElseThrow(() -> {
+            log.error("Product not found with id: ", productId);
+            return new ProductNotFoundException("Product not found with id: " + productId);
         }));
     }
 
@@ -96,7 +100,10 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = {"productsAll"}, allEntries = true),
+        @CacheEvict(cacheNames = {"productById"}, key = "#productId")
+    })
     public Optional<Product> update(UUID productId, ProductUpdateRequestDTO productUpdateRequestDTO) {
         if(productUpdateRequestDTO==null){
             log.warn("request dto to update product cannot be null");
@@ -123,7 +130,10 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = {"productsAll", "productById"}, allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = {"productsAll"}, allEntries = true),
+        @CacheEvict(cacheNames = {"productById"}, key = "#productId")
+    })
     public void delete(UUID productId) {
         if(productId==null){
             log.warn("delete a product called with id null");

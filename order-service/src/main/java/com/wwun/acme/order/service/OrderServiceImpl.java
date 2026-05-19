@@ -89,12 +89,12 @@ public class OrderServiceImpl implements OrderService{
         
         order.setItems(items);
         order.setTotal(total);
+        String orderHashed = HashUtil.sha256(orderMapper.toOrderCreateHashPayload(order));
+        order.setRequestHash(orderHashed);
 
         Optional<Order> duplicatedOrder = orderRepository.findByUserIdAndIdempotencyKey(userId, idempotencyKey);
         if(duplicatedOrder.isPresent()){
-            String orderHashed = HashUtil.sha256(orderMapper.toOrderCreateHashPayload(order));
-            order.setRequestHash(orderHashed);
-            if(duplicatedOrder.get().getRequestHash().equals(orderHashed)){
+            if(orderHashed.equals(duplicatedOrder.get().getRequestHash())){
                 return duplicatedOrder.get();
             }            
             throw new OrderDuplicatedDifferentIKeyException("Conflict, Idempotency key already used with a different request payload");
