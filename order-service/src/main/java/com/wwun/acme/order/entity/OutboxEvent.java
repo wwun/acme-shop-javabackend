@@ -40,7 +40,7 @@ public class OutboxEvent {
     @NotBlank
     private String type;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     @NotBlank
     private String payload;
 
