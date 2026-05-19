@@ -52,7 +52,6 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    @Transactional
     public Order save(UUID idempotencyKey, OrderCreateRequestDTO orderCreateRequestDTO) {
 
         UUID userId = SecurityUtils.getCurrentUserId();
