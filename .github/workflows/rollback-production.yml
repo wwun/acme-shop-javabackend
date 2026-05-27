@@ -1,0 +1,66 @@
+name: Rollback production 
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Rollback previous release
+        uses: appleboy/ssh-action@v1.0.3
+
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+  
+          script: |
+            set -e
+  
+            cd ~/acme-shop-javabackend
+    
+            if ! command -v aws >/dev/null 2>&1; then
+              sudo dnf install -y awscli
+            fi
+    
+            if ! command -v jq >/dev/null 2>&1; then
+              sudo dnf install -y jq
+            fi
+    
+            RELEASE_STATE=$(aws ssm get-parameter \
+              --name "/acme-shop/prod/release-state" \
+              --query "Parameter.Value" \
+              --output text)
+  
+            ROLLBACK_TAG=$(echo "$RELEASE_STATE" | jq -r '.history[1]')
+    
+            if [ -z "$ROLLBACK_TAG" ] || [ "$ROLLBACK_TAG" = "null" ]; then
+              echo "No rollback target found."
+              exit 1
+            fi
+    
+            echo "Rollback target: $ROLLBACK_TAG"
+    
+            UPDATED_STATE=$(echo "$RELEASE_STATE" | jq \
+              --arg TAG "$ROLLBACK_TAG" \
+              '
+              .history |= ([$TAG] + .)[0:5] |
+              .current = $TAG
+              ')
+    
+            aws ssm put-parameter \
+              --name "/acme-shop/prod/release-state" \
+              --type String \
+              --value "$UPDATED_STATE" \
+              --overwrite
+    
+            echo "IMAGE_TAG=$ROLLBACK_TAG" > .env
+    
+            docker compose -f docker-compose.prod.yml --env-file .env pull
+    
+            docker compose -f docker-compose.prod.yml --env-file .env up -d
+
+            docker image prune -f
