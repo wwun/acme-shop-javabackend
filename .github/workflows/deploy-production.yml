@@ -20,8 +20,52 @@ jobs:
         username: ec2-user
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          set -e
           cd ~/acme-shop-javabackend
           git pull origin main
-          docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml up -d
+          
+          echo "checking dependencies..."
+          if ! command -v aws >/dev/null 2>&1; then
+            sudo dnf install -y awscli
+          fi
+
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo dnf install -y jq
+          fi
+
+          if ! docker compose version >/dev/null 2>&1; then
+            echo "docker compose missing"
+            exit 1
+          fi
+
+          NEW_TAG=${{ github.sha }}
+
+          echo "reading release state"
+
+          RELEASE_STATE=$(aws ssm get-parameter \
+            --name "/acme-shop/prod/release-state" \
+            --query "Parameter.Value" \
+            --output text 2>/dev/null \
+            || echo '{"current":"initial","history":["initial"]}')
+
+          UPDATED_STATE=$(echo "$RELEASE_STATE" | jq \
+            --arg NEW_TAG "$NEW_TAG" \
+            '
+            .history |= ([$NEW_TAG] + .)[0:5] |
+            .current = $NEW_TAG
+            ')
+
+          echo "updating SSM state"
+
+          aws ssm put-parameter \
+            --name "/acme-shop/prod/release-state" \
+            --type String \
+            --value "$UPDATED_STATE" \
+            --overwrite
+
+          echo "IMAGE_TAG=$NEW_TAG" > .env
+
+          docker compose -f docker-compose.prod.yml --env-file .env pull
+          docker compose -f docker-compose.prod.yml --env-file .env up -d
+          
           docker image prune -f
