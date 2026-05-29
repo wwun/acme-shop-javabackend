@@ -80,8 +80,7 @@ public class InventoryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<InventoryResponseDTO> decreaseStock(@Valid @RequestBody StockAdjustRequestDTO stockAdjustRequestDTO){
         return ResponseEntity.status(HttpStatus.OK)
-            .body(inventoryMapper.toResponseDTO(
-                inventoryService.decreaseStock(stockAdjustRequestDTO.getProductId(), stockAdjustRequestDTO.getQuantity())
+            .body(inventoryMapper.toResponseDTO(inventoryService.decreaseStock(stockAdjustRequestDTO.getProductId(), stockAdjustRequestDTO.getQuantity())
             )
         );
     }
@@ -94,6 +93,12 @@ public class InventoryController {
                 .stream()
                 .map(stockMovementMapper::toResponseDTO)
                 .toList());
+    }
+
+    @PostMapping("/batch")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<List<InventoryResponseDTO>> getAllById(@RequestBody List<UUID> productIds){
+        return ResponseEntity.ok(inventoryService.getAllByListId(productIds).stream().map(inventoryMapper::toResponseDTO).toList());
     }
 
 

@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     }
     
     @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<HandlerExceptionDTO> insufficientStockExceptionDTO(InsufficientStockException ex){
+    public ResponseEntity<HandlerExceptionDTO> insufficientStockExceptionHandler(InsufficientStockException ex){
         HandlerExceptionDTO error = new HandlerExceptionDTO("INSUFFICIENT_STOCK", ex.getMessage(), HttpStatus.BAD_REQUEST.value(), Instant.now());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }

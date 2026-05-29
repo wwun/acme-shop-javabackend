@@ -59,8 +59,8 @@ public class ProductController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PostMapping("/listids")
-    public ResponseEntity<List<ProductResponseDTO>> getAllById(@RequestBody List<UUID> productsId){
-        return ResponseEntity.status(HttpStatus.OK).body(productService.getAllById(productsId));
+    @PostMapping("/batch")
+    public ResponseEntity<List<ProductResponseDTO>> getAllById(@RequestBody List<UUID> productIds){
+        return ResponseEntity.status(HttpStatus.OK).body(productService.getAllById(productIds));
     }
 }

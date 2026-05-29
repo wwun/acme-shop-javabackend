@@ -22,7 +22,7 @@ public interface ProductClient {
     @GetMapping("/api/products/{id}/price")
     BigDecimal getProductPrice(@PathVariable("id") UUID id);
 
-    @PostMapping("/api/products/listids")
+    @PostMapping("/api/products/batch")
     List<ProductResponseDTO> getAllById(@RequestBody List<UUID> productsId);
 
 }

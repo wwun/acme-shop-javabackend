@@ -21,4 +21,6 @@ public interface InventoryService {
 
     List<StockMovement> findMovementByProductId(UUID productId);
 
+    List<Inventory> getAllByListId(List<UUID> productsId);
+
 }
