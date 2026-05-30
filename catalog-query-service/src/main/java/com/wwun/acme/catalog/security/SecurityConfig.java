@@ -1,4 +1,4 @@
-package com.wwun.acme.cart.security;
+package com.wwun.acme.catalog.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,21 +15,22 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception{
-        return http
-            .authorizeHttpRequests(authz -> authz
-                //.anyRequest().permitAll()
-                //.requestMatchers("/api/carts/**").permitAll()
+
+        return http.authorizeHttpRequests( authz -> authz
+                .requestMatchers("/api/catalogs/health").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/v3/api/docs/**").permitAll()
                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-             .csrf(csrf -> csrf.disable()
-            )
+            .csrf(csrf -> csrf.disable())
             .build();
+
     }
-    
+
     @Bean
-    public JwtAuthFilter jwtAuthFilter(JwtService jwtService) {
+    public JwtAuthFilter jwtAuthFilter(JwtService jwtService){
         return new JwtAuthFilter(jwtService);
     }
+
+
 }
