@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.wwun.acme.catalog.dto.client.inventory.InventoryAvailabilityDTO;
 
-@FeignClient(name = "msvc-inventories")
+@FeignClient(name = "msvc-inventories", configuration = FeignSecurityConfig.class)
 public interface InventoryClient {
 
     @PostMapping("/api/inventories/batch")

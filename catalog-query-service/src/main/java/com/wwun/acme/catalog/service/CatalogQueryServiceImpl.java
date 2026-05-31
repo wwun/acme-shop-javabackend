@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.wwun.acme.catalog.dto.client.inventory.InventoryAvailabilityDTO;
@@ -34,6 +35,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService{
     }
 
     @Override
+    @Cacheable(cacheNames = "catalogProductsByIds", keyGenerator = "catalogProductIdsKeyGenerator")
     public List<CatalogProductResponseDTO> getProductsAndInventories(List<UUID> productIds){
         if(productIds == null || productIds.isEmpty()){
             log.warn("product list received is empty");
@@ -80,6 +82,9 @@ public class CatalogQueryServiceImpl implements CatalogQueryService{
             return productClient.getProductsById(productIds);
         }catch(FeignException ex){
             log.error("Error calling product-service. status={}, message={}", ex.status(), ex.getMessage());
+            if(ex.status() >= 400 && ex.status() < 500){
+                throw new CatalogQueryException("Product service rejected the catalog request");
+            }
             throw new ExternalServiceException("Unable to retrieve products from product-service");
         }
     }
@@ -89,6 +94,9 @@ public class CatalogQueryServiceImpl implements CatalogQueryService{
             return inventoryClient.getInventoriesByProductIds(productIds);
         }catch(FeignException ex){
             log.error("Error calling inventory-service. status={}, message={}", ex.status(), ex.getMessage());
+            if(ex.status() >= 400 && ex.status() < 500){
+                throw new CatalogQueryException("Inventory service rejected the catalog request");
+            }
             throw new ExternalServiceException("Unable to retrieve inventory availability from inventory-service");
         }
     }

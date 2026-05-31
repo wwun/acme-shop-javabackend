@@ -11,6 +11,36 @@ La idea importante: las notas antiguas explicaban varias formas de implementar J
 - Microservicios de negocio con `JwtAuthFilter` propio y `@PreAuthorize`.
 - Feign con propagacion del token cuando un servicio llama a otro.
 
+## Como Usar Este Documento
+
+Este documento tiene tres niveles:
+
+```text
+Secciones 1-14:
+  Entender el flujo actual, las piezas internas y los errores reales del proyecto.
+
+Seccion 15:
+  Replicar seguridad rapido en un servicio nuevo usando el patron actual del proyecto.
+
+Secciones 16-18:
+  Preparar entrevista, mejoras production-level y recordar la evolucion tecnica.
+```
+
+No todo lo descrito aqui debe implementarse siempre.
+
+Regla practica:
+
+```text
+Para entender internals:
+  estudia JwtAuthFilter, JwtAuthConverter, SecurityContextHolder y AuthUserPrincipal.
+
+Para mantener consistencia con Acme Shop hoy:
+  usa el patron custom-filter actual en los microservicios.
+
+Para un sistema nuevo production-level:
+  preferir OAuth2 Resource Server, claims, scopes/roles, IdP y token propagation.
+```
+
 ## 1. Conceptos Base
 
 **Autenticacion** responde: quien eres.
@@ -140,6 +170,58 @@ JWT -> username, roles, userId -> AuthUserPrincipal -> UsernamePasswordAuthentic
 ```
 
 El principal del proyecto no es solo un string. Es `AuthUserPrincipal`, que permite obtener `userId` y `username` desde `SecurityUtils`.
+
+### AuthUserPrincipal
+
+`AuthUserPrincipal` es un principal personalizado del proyecto.
+
+En Spring Security, `Authentication` suele tener tres partes:
+
+```text
+principal:
+  quien es el usuario
+
+credentials:
+  password, token o credencial usada
+
+authorities:
+  roles/permisos
+```
+
+En Acme Shop, el filtro custom crea algo parecido a:
+
+```java
+new UsernamePasswordAuthenticationToken(principal, token, authorities)
+```
+
+Donde:
+
+```text
+principal = AuthUserPrincipal(userId, username)
+credentials = token JWT
+authorities = ROLE_USER / ROLE_ADMIN
+```
+
+La razon de usar `AuthUserPrincipal` fue no depender solo del username.
+
+En microservicios reales muchas veces necesitas:
+
+```text
+userId
+username
+roles
+```
+
+Ejemplo:
+
+```java
+SecurityUtils.getCurrentUserId()
+SecurityUtils.getCurrentUsername()
+```
+
+Frase corta:
+
+> `AuthUserPrincipal` define que datos del usuario quiero tener disponibles despues de validar el JWT.
 
 ## 5. SecurityConfig en Microservicios Servlet
 
@@ -329,6 +411,99 @@ filterChain.doFilter(request, response);
 ```
 
 `SecurityContextHolder` guarda la autenticacion de la request actual. Luego `@PreAuthorize`, controllers y services pueden consultar quien es el usuario.
+
+### SecurityContextHolder
+
+Esta linea:
+
+```java
+Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+```
+
+significa:
+
+```text
+Dame el usuario autenticado de la request actual.
+```
+
+`SecurityContextHolder` es la memoria de seguridad de Spring para la request actual.
+
+Flujo:
+
+```text
+JWT entra
+  -> JwtAuthFilter
+  -> JwtAuthConverter
+  -> AuthUserPrincipal(userId, username)
+  -> UsernamePasswordAuthenticationToken(principal, token, roles)
+  -> SecurityContextHolder
+```
+
+Luego:
+
+```text
+@PreAuthorize puede revisar roles.
+Controllers pueden recibir Authentication.
+Services/helpers pueden usar SecurityUtils.
+FeignInterceptor puede recuperar el token actual.
+```
+
+Resumen:
+
+```text
+SecurityContextHolder guarda quien soy en esta request.
+AuthUserPrincipal define que datos tengo sobre ese usuario.
+SecurityUtils lee esos datos de forma comoda.
+JwtFeignInterceptor reutiliza el token para llamadas internas.
+```
+
+### SecurityUtils
+
+`SecurityUtils` es una clase helper para evitar repetir esto por todo el codigo:
+
+```java
+SecurityContextHolder.getContext().getAuthentication().getPrincipal()
+```
+
+En lugar de eso, el proyecto usa:
+
+```java
+SecurityUtils.getCurrentUserId()
+SecurityUtils.getCurrentUsername()
+SecurityUtils.getCurrentToken()
+SecurityUtils.isAdmin(auth)
+```
+
+Esto es util en services, interceptors o helpers donde no quieres pasar `Authentication` como parametro todo el tiempo.
+
+Importante:
+
+```text
+SecurityUtils no es exclusivo del filtro custom.
+Tambien puede existir con Resource Server.
+```
+
+Lo que cambia es como se lee el usuario actual.
+
+Con filtro custom:
+
+```text
+Authentication principal = AuthUserPrincipal
+Authentication credentials = token
+```
+
+Con Resource Server:
+
+```text
+Authentication normalmente es JwtAuthenticationToken
+El token y los claims viven dentro del Jwt
+```
+
+Por eso, si se migra a Resource Server, `SecurityUtils` se puede adaptar para leer:
+
+```text
+JwtAuthenticationToken -> Jwt -> claims -> userId / username / roles
+```
 
 ## 7. API Gateway
 
@@ -567,6 +742,69 @@ Con Resource Server, Spring crea otro tipo de `Authentication`, normalmente `Jwt
 Frase importante:
 
 > Lo profesional no es "no usar interceptor". Lo profesional es usar Resource Server para validar y un RequestInterceptor/WebClient filter para propagar el contexto o token cuando una llamada downstream representa al usuario.
+
+### Necesito `AuthUserPrincipal` si uso Resource Server?
+
+No necesariamente.
+
+Con Resource Server hay varias formas profesionales de acceder a `userId`.
+
+#### Forma 1: leer el claim directamente desde el JWT
+
+Si el token trae:
+
+```json
+{
+  "sub": "william",
+  "userId": "..."
+}
+```
+
+puedes leerlo desde `JwtAuthenticationToken`:
+
+```java
+Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+if (auth instanceof JwtAuthenticationToken jwtAuth) {
+    String userId = jwtAuth.getToken().getClaimAsString("userId");
+}
+```
+
+En este modelo, no necesitas `AuthUserPrincipal`.
+
+#### Forma 2: usar `JwtAuthenticationConverter`
+
+Spring Security permite configurar un converter para transformar claims del JWT en authorities o incluso adaptar el principal.
+
+Esto sirve para:
+
+```text
+roles -> GrantedAuthority
+scope -> authorities
+userId -> principal/custom representation
+```
+
+Esta opcion es mas estandar que escribir todo el filtro manualmente.
+
+#### Forma 3: mantener un helper tipo `SecurityUtils`
+
+Aunque uses Resource Server, puedes mantener `SecurityUtils`, pero adaptado:
+
+```text
+Si Authentication es AuthUserPrincipal -> flujo custom actual.
+Si Authentication es JwtAuthenticationToken -> flujo Resource Server.
+```
+
+Conclusion:
+
+```text
+Necesitar userId no obliga a usar JwtAuthFilter custom.
+Resource Server tambien puede darte userId desde claims.
+```
+
+Frase de entrevista:
+
+> En la version custom use `AuthUserPrincipal` para tener `userId` y `username` como principal. Si migro a Resource Server, puedo leer `userId` desde los claims del `JwtAuthenticationToken` o configurar un `JwtAuthenticationConverter`. No necesito mantener un filtro custom solo por necesitar el userId.
 
 ### Flujo profesional tipico
 
@@ -881,19 +1119,100 @@ Servicios que ya tienen esta idea implementada:
 - `order-service`
 - `cart-service`
 
+### Que es `RequestTemplate` en Feign
+
+En `JwtFeignInterceptor` aparece este metodo:
+
+```java
+public void apply(RequestTemplate template){
+    String token = SecurityUtils.getCurrentToken();
+    
+    if(token == null || token.isBlank()){
+        return;
+    }
+
+    template.header(TokenJwtConfig.HEADER_AUTHORIZATION, TokenJwtConfig.PREFIX_HEADER + " " + token);
+}
+```
+
+Aqui `template` no es `RestTemplate`.
+
+`RequestTemplate` es una clase de Feign que representa la request HTTP saliente antes de enviarse.
+
+Frase clave:
+
+> `template` representa la request HTTP que Feign esta a punto de enviar.
+
+Otra frase clave:
+
+> Antes de que Feign mande la request real, te da oportunidad de modificarla.
+
+Por eso el interceptor puede agregar headers:
+
+```java
+template.header("Authorization", "Bearer abc");
+```
+
+Flujo:
+
+```text
+catalog-query-service recibe:
+  Authorization: Bearer abc
+
+catalog-query-service llama product-service con Feign.
+
+JwtFeignInterceptor se ejecuta antes de enviar la request.
+
+RequestTemplate todavia es una request en construccion.
+
+El interceptor agrega:
+  Authorization: Bearer abc
+
+Feign envia la request real a product-service.
+```
+
+Sin interceptor:
+
+```text
+catalog-query-service -> product-service
+  sin Authorization
+
+product-service:
+  401/403
+```
+
+Con interceptor:
+
+```text
+catalog-query-service -> product-service
+  Authorization: Bearer abc
+
+product-service:
+  valida token y permite la request
+```
+
+Analogía:
+
+```text
+RequestTemplate = sobre antes de enviarlo
+JwtFeignInterceptor = persona que le pega la etiqueta Authorization
+Feign = cartero que manda el sobre
+```
+
 Nota importante de estado actual:
 
 - `inventory-service` tiene `FeignSecurityConfig`, pero actualmente esta vacio.
-- `catalog-query-service` todavia tiene `SecurityConfig` y `JwtAuthFilter` vacios.
+- `catalog-query-service` ya tiene `SecurityConfig`, `JwtAuthFilter` y `FeignSecurityConfig` con el patron custom actual.
 
 Checklist para `catalog-query-service`:
 
 ```text
-1. Copiar/adaptar SecurityConfig de product-service.
-2. Copiar/adaptar JwtAuthFilter de product-service.
-3. Crear FeignSecurityConfig con JwtFeignInterceptor.
-4. Agregar configuration = FeignSecurityConfig.class a ProductClient e InventoryClient.
+1. Verificar SecurityConfig.
+2. Verificar JwtAuthFilter.
+3. Verificar FeignSecurityConfig con JwtFeignInterceptor.
+4. Verificar configuration = FeignSecurityConfig.class en ProductClient e InventoryClient.
 5. Probar request por gateway con Bearer token.
+6. Probar request sin token si la ruta debe ser protegida.
 ```
 
 ## 11. Seguridad Gruesa y Seguridad Fina
@@ -1182,7 +1501,7 @@ Version senior:
 
 ## 17. Mejoras Pendientes
 
-- Implementar seguridad completa en `catalog-query-service`.
+- Probar seguridad completa en `catalog-query-service` por gateway.
 - Revisar `inventory-service/FeignSecurityConfig`, actualmente vacio.
 - Estandarizar si todos los servicios usaran filtro custom o Resource Server.
 - Agregar refresh tokens si se quiere flujo mas real.
@@ -1224,167 +1543,3 @@ Etapa 6:
 Esta evolucion es normal. Lo importante para entrevista es explicar por que cambiaste:
 
 > Empece con filtros custom para entender el mecanismo interno. Luego movi JWT a `acme-commons`, separe auth de user y deje el gateway como Resource Server para acercarme mas a una arquitectura de microservicios real.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=========================
-
-Resource Server vs Filtro Propio
-Tu situación actual es híbrida:
-
-Gateway:
-  usa Spring Security OAuth2 Resource Server
-
-Microservicios:
-  usan JwtAuthFilter propio + JwtAuthConverter
-Eso significa que el gateway usa el mecanismo estándar de Spring:
-
-.oauth2ResourceServer(oauth2 -> oauth2.jwt())
-Spring se encarga de leer el Bearer token, validar firma, expiración y crear el Authentication.
-
-En cambio, tus microservicios hacen eso manualmente con:
-
-JwtAuthFilter -> JwtAuthConverter -> JwtService
-Eso funciona, y para aprender es excelente. Pero en producción real suele preferirse estandarizar para reducir código propio de seguridad.
-
-La versión más production level sería:
-
-Gateway:
-  Resource Server
-
-Product:
-  Resource Server
-
-Order:
-  Resource Server
-
-Inventory:
-  Resource Server
-
-Catalog:
-  Resource Server
-Así todos validan JWT con el mismo mecanismo estándar.
-
-Entonces qué te conviene
-Para este momento, yo haría esto:
-
-Ahora:
-  implementa catalog con el mismo patrón que ya tienes:
-  SecurityConfig + JwtAuthFilter + FeignSecurityConfig
-
-Luego:
-  crea una mejora técnica documentada:
-  "migrar microservicios a OAuth2 Resource Server"
-¿Por qué? Porque si cambias todo ahora, te arriesgas a romper varios servicios justo cuando estás cerrando catalog. Primero termina el flujo. Después mejoras seguridad de forma controlada.
-
-FeignSecurityConfig
-Sí, para catalog-query-service lo necesitas si catalog llama a product-service e inventory-service, y esos servicios piden JWT.
-
-Sin FeignSecurityConfig, pasa esto:
-
-Cliente -> Catalog con Authorization ✅
-Catalog -> Product sin Authorization ❌
-Product responde 403
-Con FeignSecurityConfig:
-
-Cliente -> Catalog con Authorization ✅
-Catalog -> Product con el mismo Authorization ✅
-Catalog -> Inventory con el mismo Authorization ✅
-Entonces para catalog necesitas:
-
-@FeignClient(name = "msvc-products", configuration = FeignSecurityConfig.class)
-y lo mismo para inventory.
-
-Refresh Tokens
-Ahora seguramente tienes solo access token.
-
-Login -> access token -> se usa hasta expirar
-Eso está bien para portfolio y MVP.
-
-Más production level:
-
-Login -> access token corto + refresh token largo
-Ejemplo:
-
-Access token: 15 minutos
-Refresh token: 7 días / 30 días
-El access token se usa en APIs. Cuando expira, el cliente manda el refresh token a:
-
-POST /api/auth/refresh
-y recibe un access token nuevo.
-
-No lo haría ahora mismo antes de terminar catalog. Lo pondría como siguiente mejora de auth-service.
-
-Security Tests
-Estos sí convienen bastante para entrevista. Mínimo por servicio:
-
-Sin token -> 401/403
-Token inválido -> 401/403
-Token con USER accediendo endpoint ADMIN -> 403
-Token con ADMIN -> 200/201
-Endpoint público health -> 200
-Feign sin token propagado -> falla
-Feign con token propagado -> funciona
-Para empezar, testea catalog-query-service después de implementarlo.
-
-Mover Secretos
-Ahora el secreto JWT viene de config, pero lo importante production level es:
-
-No hardcodear jwt.secret
-No commitear secretos
-Usar Config Server con repo privado, variables de entorno o secret manager
-En producción real:
-
-Local/dev:
-  .env / docker compose env
-
-Cloud:
-  AWS Secrets Manager / Parameter Store
-  Azure Key Vault
-  GCP Secret Manager
-  Kubernetes Secrets
-Qué no debes dejar como hueco
-Para catalog, checklist real:
-
-1. SecurityConfig completo
-2. JwtAuthFilter completo
-3. FeignSecurityConfig completo
-4. ProductClient usa FeignSecurityConfig
-5. InventoryClient usa FeignSecurityConfig
-6. Controller con @PreAuthorize
-7. Gateway route hacia catalog
-8. Config Server tiene config de catalog
-9. Docker compose incluye catalog
-10. Probar por gateway con Bearer token
-11. Probar sin token
-12. Probar token USER y ADMIN
-Mi recomendación clara:
-
-Hoy:
-  cierra catalog con el patrón actual del proyecto.
-
-Después:
-  mejora security:
-    - Resource Server en todos los microservicios
-    - refresh tokens
-    - security tests
-    - secretos fuera del repo

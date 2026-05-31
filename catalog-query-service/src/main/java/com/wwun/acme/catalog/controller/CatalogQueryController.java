@@ -12,6 +12,8 @@ import com.wwun.acme.catalog.dto.InventoryBatchRequestDTO;
 import com.wwun.acme.catalog.dto.response.CatalogProductResponseDTO;
 import com.wwun.acme.catalog.service.CatalogQueryService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/catalogs")
 public class CatalogQueryController {
@@ -23,7 +25,7 @@ public class CatalogQueryController {
     }
 
     @PostMapping
-    public ResponseEntity<List<CatalogProductResponseDTO>> getProductsAndInventories(@RequestBody InventoryBatchRequestDTO inventoryBatchRequestDTO){
+    public ResponseEntity<List<CatalogProductResponseDTO>> getProductsAndInventories(@Valid @RequestBody InventoryBatchRequestDTO inventoryBatchRequestDTO){
         return ResponseEntity.ok().body(catalogQueryService.getProductsAndInventories(inventoryBatchRequestDTO.productIds()));
     }
 

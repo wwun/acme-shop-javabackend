@@ -19,7 +19,8 @@ public class SecurityConfig {
         return http.authorizeHttpRequests( authz -> authz
                 .requestMatchers("/api/catalogs/health").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/v3/api/docs/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/catalogs/**").permitAll()
                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .csrf(csrf -> csrf.disable())

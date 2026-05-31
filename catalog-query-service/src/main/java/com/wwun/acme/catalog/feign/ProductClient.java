@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.wwun.acme.catalog.dto.client.product.ProductResponseDTO;
 
-@FeignClient(name = "msvc-products")
+@FeignClient(name = "msvc-products", configuration = FeignSecurityConfig.class)
 public interface ProductClient {
 
     @PostMapping("/api/products/batch")
