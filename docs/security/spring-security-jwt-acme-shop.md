@@ -1514,7 +1514,127 @@ Version senior:
 - Mover secretos a Config Server/secret manager.
 - Agregar Swagger con soporte Bearer token.
 
-## 18. Estado Mental del Proyecto
+## 18. Lecciones Aprendidas: Catalog Security
+
+### `JwtService` no encontrado
+
+Error real:
+
+```text
+Parameter 0 of method jwtAuthFilter required a bean of type
+com.wwun.acme.security.JwtService that could not be found.
+```
+
+Causa:
+
+`JwtService` vive en `acme-commons`, dentro del paquete:
+
+```text
+com.wwun.acme.security
+```
+
+Pero `catalog-query-service` tiene su clase principal en:
+
+```text
+com.wwun.acme.catalog
+```
+
+Spring Boot escanea por defecto desde el paquete de la clase principal hacia abajo. Entonces:
+
+```text
+com.wwun.acme.catalog
+  ve com.wwun.acme.catalog.*
+  no ve com.wwun.acme.security.*
+```
+
+Solucion usada:
+
+```java
+@SpringBootApplication(scanBasePackages = {
+    "com.wwun.acme.catalog",
+    "com.wwun.acme.security"
+})
+public class CatalogQueryApplication {
+}
+```
+
+Regla mental:
+
+```text
+Si un bean esta en otro modulo/paquete, no basta con tener la dependencia Maven.
+Spring tambien debe escanearlo o importarlo como configuracion.
+```
+
+Respuesta senior:
+
+> A shared library dependency only puts classes on the classpath. It does not automatically make every class a Spring bean unless component scanning or auto-configuration imports it. If a shared `JwtService` is defined in commons, each service must scan/import that configuration or move the application base package high enough.
+
+### Gateway 404 vs 401
+
+Durante pruebas con catalog:
+
+```text
+POST localhost:8090/api/catalogs -> 404
+POST localhost:8090/api/catalogs -> 401
+```
+
+Como interpretarlo:
+
+```text
+404:
+  El gateway no encontro ruta o la ruta no estaba cargada/servicio no estaba registrado todavia.
+
+401:
+  La ruta ya existe, pero el gateway esta bloqueando por token ausente/invalido.
+```
+
+Por eso, pasar de 404 a 401 puede ser una buena senal: significa que el gateway ya encontro la ruta y ahora el problema es autenticacion.
+
+Para probar por gateway:
+
+```http
+POST http://localhost:8090/api/catalogs
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "productIds": [
+    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+  ]
+}
+```
+
+### `permitAll` no elimina seguridad downstream
+
+Aunque catalog permita `/api/catalogs/**`, catalog llama a product/inventory con Feign.
+
+Si product/inventory tienen:
+
+```java
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+```
+
+entonces catalog necesita propagar el token cuando llama downstream.
+
+Flujo:
+
+```text
+Cliente -> gateway -> catalog
+catalog -> product
+catalog -> inventory
+```
+
+Si catalog no manda `Authorization` a product/inventory, el primer servicio puede entrar, pero la llamada interna puede fallar con 401/403.
+
+Respuesta senior:
+
+> Public or semi-public aggregation endpoints can still call secured downstream services. In that case I need a clear decision: propagate the user token, use service credentials, or expose a read-only internal endpoint. I do not assume that `permitAll` at the BFF/catalog layer makes downstream authorization irrelevant.
+
+## 19. Estado Mental del Proyecto
 
 La documentacion anterior no estaba "mal"; estaba mezclando etapas.
 

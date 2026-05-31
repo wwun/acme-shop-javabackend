@@ -543,7 +543,109 @@ Proyecto reactivo:
   WebClient.
 ```
 
-## 16. Produccion / Enterprise
+## 16. Lecciones Aprendidas: Catalog Query
+
+### Gateway route vs Feign route
+
+En catalog hubo dos rutas distintas que no deben mezclarse:
+
+```text
+Cliente externo:
+  Bruno/browser -> API Gateway -> catalog-query-service
+
+Llamadas internas:
+  catalog-query-service -> product-service con Feign
+  catalog-query-service -> inventory-service con Feign
+```
+
+El gateway usa rutas como:
+
+```yaml
+- id: msvc-catalogs
+  uri: lb://msvc-catalogs
+  predicates:
+    - Path=/api/catalogs/**
+```
+
+Feign usa nombres de servicio:
+
+```java
+@FeignClient(name = "msvc-products")
+public interface ProductClient {
+}
+```
+
+Regla mental:
+
+```text
+Gateway route:
+  resuelve entrada externa.
+
+Feign client:
+  resuelve comunicacion interna servicio-a-servicio.
+```
+
+### Body del endpoint batch
+
+El endpoint de catalog no recibe un array directo. Recibe un objeto:
+
+```json
+{
+  "productIds": [
+    "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+  ]
+}
+```
+
+Esto debe coincidir con:
+
+```java
+public record InventoryBatchRequestDTO(List<UUID> productIds) {
+}
+```
+
+Si se manda solo:
+
+```json
+[
+  "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+]
+```
+
+no coincide con el contrato del controller.
+
+### 401/403 desde downstream
+
+Catalog puede estar arriba y aun asi devolver error si las llamadas Feign a product/inventory fallan.
+
+Casos:
+
+```text
+401:
+  No llego token o el token es invalido.
+
+403:
+  El token existe, pero no tiene rol/scope suficiente.
+
+500:
+  El servicio agregador puede estar envolviendo mal una FeignException.
+```
+
+Mejor practica:
+
+```text
+No convertir todos los errores Feign en 500 generico.
+Mapear:
+  FeignException.Unauthorized -> 401 o ExternalServiceException clara
+  FeignException.Forbidden -> 403 o ExternalServiceException clara
+  FeignException.NotFound -> dato faltante / unavailable / 404 segun contrato
+```
+
+Respuesta senior:
+
+> When debugging an aggregator service, I separate edge routing from downstream calls. A gateway 401 means the route exists but authentication failed. A direct service 500 may actually hide a downstream Feign 401/403, so I inspect logs and map FeignException explicitly instead of leaking a generic internal error.
+
+## 17. Produccion / Enterprise
 
 En empresas grandes, Feign o cualquier cliente HTTP debe tener:
 
@@ -567,7 +669,7 @@ Pregunta senior:
 Que pasa si el servicio llamado esta lento, caido, devuelve 404, 500 o cambia su contrato?
 ```
 
-## 17. Checklist Para Servicio Nuevo
+## 18. Checklist Para Servicio Nuevo
 
 ```text
 1. Definir si realmente necesitas llamada sincrona.
@@ -584,7 +686,7 @@ Que pasa si el servicio llamado esta lento, caido, devuelve 404, 500 o cambia su
 12. Agregar tests.
 ```
 
-## 18. Que Decir En Entrevista
+## 19. Que Decir En Entrevista
 
 Version corta:
 
@@ -593,4 +695,3 @@ Version corta:
 Version senior:
 
 > I treat Feign calls as remote network calls, not local method calls. That means I design for timeouts, failures, contract compatibility, observability and security propagation. I avoid N+1 service calls by using batch endpoints, and for critical workflows I avoid relying only on synchronous calls when an event-driven or transactional pattern is more appropriate.
-

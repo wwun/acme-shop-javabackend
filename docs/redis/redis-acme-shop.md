@@ -1364,11 +1364,77 @@ scoreboards
 
 No es core para Acme, pero es una estructura clasica de Redis.
 
-## 25. Version Corta Para Entrevista
+## 25. Leccion Aprendida: Redis en Docker
+
+Error real:
+
+```text
+Actuator health:
+  redis: DOWN
+
+Error:
+  RedisConnectionFailureException: Unable to connect to Redis
+```
+
+Causa:
+
+```text
+Dentro de Docker, localhost no apunta al contenedor Redis.
+localhost apunta al mismo contenedor donde corre la aplicacion.
+```
+
+Si `catalog-query-service` corre en Docker y Redis corre en otro contenedor, la app debe conectarse a:
+
+```text
+redis:6379
+```
+
+No a:
+
+```text
+localhost:6379
+```
+
+Solucion en `docker-compose.yml`:
+
+```yaml
+catalog-query-service:
+  depends_on:
+    redis:
+      condition: service_started
+  environment:
+    - SPRING_DATA_REDIS_HOST=redis
+    - SPRING_DATA_REDIS_PORT=6379
+```
+
+Como verificar:
+
+```bash
+curl http://localhost:8093/actuator/health
+```
+
+Resultado esperado:
+
+```json
+{
+  "status": "UP",
+  "components": {
+    "redis": {
+      "status": "UP"
+    }
+  }
+}
+```
+
+Respuesta senior:
+
+> In Docker Compose, services should connect through service DNS names, not localhost. If a service uses Redis, I configure `SPRING_DATA_REDIS_HOST=redis` or the equivalent config-server property, and I validate it through actuator health.
+
+## 26. Version Corta Para Entrevista
 
 > I use Redis differently depending on the responsibility. For read-heavy catalog data, I use Redis through Spring Cache and RedisCacheManager, with TTL and eviction on writes. For active cart state, I use RedisTemplate with hashes because I need granular updates like productId-to-quantity increments. I avoid using Redis as the final source of truth for inventory reservation, payments, or ledger data. In production I would monitor hit ratio, latency, memory, evictions, and define fallback behavior when Redis is unavailable.
 
-## 26. Version Production-Level
+## 27. Version Production-Level
 
 Para empresas grandes, Redis debe venir con decisiones explicitas:
 

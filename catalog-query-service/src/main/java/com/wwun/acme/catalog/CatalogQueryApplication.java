@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 @EnableFeignClients
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.wwun.acme.catalog", "com.wwun.acme.security"})
 @EnableMethodSecurity(prePostEnabled = true)
 public class CatalogQueryApplication {
     public static void main(String[] args) {
