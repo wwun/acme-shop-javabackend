@@ -3,6 +3,7 @@ package com.wwun.acme.catalog.service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -59,7 +60,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService{
                 (existing, duplicated) -> existing
             ));
 
-        return products.stream().map(product -> {
+        return new ArrayList<>(products.stream().map(product -> {
             InventoryAvailabilityDTO inventory = inventoryByProductId.get(product.id());
 
             AvailabilityResponseDTO availability = buildAvailability(inventory);
@@ -73,7 +74,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService{
                 availability
             );
 
-        }).toList();
+        }).toList());
 
     }
 

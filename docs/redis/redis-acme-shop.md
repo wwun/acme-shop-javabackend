@@ -538,6 +538,30 @@ Leccion:
 
 > En cache no solo importa el dato logico. Tambien importa el tipo concreto que serializas.
 
+El mismo criterio aplica a `catalog-query-service`.
+
+Si el metodo cacheado devuelve una lista construida con:
+
+```java
+products.stream()
+    .map(...)
+    .toList();
+```
+
+puede terminar serializando una lista inmutable interna de Java.
+
+Para cachear respuestas con `GenericJackson2JsonRedisSerializer`, es mas seguro devolver una lista concreta normal:
+
+```java
+return new ArrayList<>(
+    products.stream()
+        .map(...)
+        .toList()
+);
+```
+
+Esto evita errores donde el primer request funciona porque viene del metodo real, pero el segundo falla al leer desde Redis.
+
 ### GenericJackson2JsonRedisSerializer
 
 Explicacion precisa:
