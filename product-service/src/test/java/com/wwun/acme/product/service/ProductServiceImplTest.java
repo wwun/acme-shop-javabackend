@@ -112,7 +112,7 @@ public class ProductServiceImplTest
 	void save_shouldPersistProduct_whenCategoryExists(){
 
 		//Give
-		ProductCreateRequestDTO productCreateRequestDTO = mock(ProductCreateRequestDTO.class);
+		//ProductCreateRequestDTO productCreateRequestDTO = mock(ProductCreateRequestDTO.class);
 		
 		// UUID categoryId = UUID.randomUUID();
 		// Category category = new Category();
