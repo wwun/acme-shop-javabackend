@@ -18,7 +18,7 @@ public class SecurityConfig {
         return http
             .authorizeHttpRequests(authz -> authz
                 //.anyRequest().permitAll()
-                .requestMatchers("/api/carts/**").permitAll()
+                //.requestMatchers("/api/carts/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated())

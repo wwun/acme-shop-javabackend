@@ -270,4 +270,15 @@ public class InventoryServiceImpl implements InventoryService{
         
     }
 
+    @Override
+    public List<Inventory> getAllByListId(List<UUID> productsId){
+        if(productsId.isEmpty()){
+            log.warn("delete called with productId null");
+            throw new IllegalArgumentException("productId cannot be empty");
+        }
+        
+        return inventoryRepository.findAllByProductIdIn(productsId);
+    }
+    
 }
+

@@ -1,5 +1,6 @@
 package com.wwun.acme.inventory.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,5 +13,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID>{
     Optional<Inventory> findByProductId(UUID productId);
     void deleteByProductId(UUID productId);
     Boolean existsByProductId(UUID productId);
+    List<Inventory> findAllByProductIdIn(List<UUID> productsId);
 
 }

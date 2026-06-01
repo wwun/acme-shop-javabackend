@@ -123,6 +123,7 @@
     <module>cart-service</module>
     <module>auth-service</module>
     <module>inventory-service</module>
+    <module>catalog-query-service</module>
   </modules>
   <build>
     <pluginManagement>

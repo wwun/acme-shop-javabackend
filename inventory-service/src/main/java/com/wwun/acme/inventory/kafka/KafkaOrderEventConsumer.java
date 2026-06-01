@@ -38,7 +38,6 @@ public class KafkaOrderEventConsumer {
     )
     public void consume(String payload){
         try{
-            //se asume qe solo va a tener ordercreated
             OrderCreatedEvent event = objectMapper.readValue(payload, OrderCreatedEvent.class);
 
             log.info("Received ORDER_CREATED for orderId: {}", event.orderId());

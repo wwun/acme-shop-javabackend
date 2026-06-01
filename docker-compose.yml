@@ -179,6 +179,30 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+
+  catalog-query-service:
+    build:
+      context: .
+      dockerfile: ./catalog-query-service/Dockerfile
+    container_name: catalog-query-service
+    ports:
+      - "8093:8001"
+    networks:
+      - acme-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
       
   api-gateway-server:
     build:
@@ -206,6 +230,8 @@ services:
       cart-service:
         condition: service_started
       inventory-service:
+        condition: service_started
+      catalog-query-service:
         condition: service_started
       
   prometheus:
